@@ -1,11 +1,48 @@
-Calc = Calc or require('utils/calc')
-Str = Str or require('utils/str')
-Inventory = Inventory or require('inventory')
-World = World or require('world')
-Action = Action or require('action')
-Walk = Walk or require('walk')
-Home = Home or require('home')
-Miner = Miner or require('gathering/miner')
-Wood = Wood or require('gathering/wood')
-Farm = Farm or require('farm')
-Crafting = Crafting or require('crafting')
+Str = require('utils/str')
+
+function script_path()
+    local str = Str.split(debug.getinfo(1, "S").source, "\\")
+    table.remove(str, #str)
+    return table.concat(str, "\\")
+end
+
+function evalfile(filename, env)
+    local f = assert(loadfile(filename))
+    return f()
+end
+
+function eval(text)
+    local f = assert(load(text))
+    return f()
+end
+
+function errorhandler(err)
+    return debug.traceback(err)
+end
+
+function include(filename)
+    filename = script_path() .. '\\' .. filename .. '.lua'
+    local success, result = xpcall(evalfile, errorhandler, filename)
+    if not success then
+        print("[ERROR]\n",result,"[/ERROR]\n")
+    end
+    return result
+end
+
+function include_noerror(filename)
+    filename = script_path() .. '\\' .. filename .. '.lua'
+    local success, result = xpcall(evalfile, errorhandler, filename)
+    --print(string.format("success=%s filename=%s\n", success, filename))
+end
+
+Calc = include('utils/calc')
+Str = include('utils/str')
+Inventory = include('inventory')
+World = include('world')
+Action = include('action')
+Walk = include('walk')
+Home = include('home')
+Miner = include('gathering/miner')
+Wood = include('gathering/wood')
+Farm = include('farm')
+Crafting = include('crafting')
