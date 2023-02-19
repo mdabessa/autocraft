@@ -58,14 +58,14 @@ world.solidBlock = function(block)
     return true
 end
 
-world.walkableBlock = function(pos, from)
+world.walkableBlock = function(pos, from, max_jump, max_fall)
     -- Check if the position is walkable and return the position.
     -- If it is a position that has to be make a extra moviment, like jumping or falling,
     -- it will be necessary to return the position that the player will be after the moviment.
     -- If the position is not walkable, return nil
 
-    local max_fall = 5
-    local max_jump = 1
+    max_fall = max_fall or 5
+    max_jump = max_jump or 1
     for i = -max_fall, max_jump do
         --has space?
         if world.solidBlock(getBlock(pos[1], pos[2]+i, pos[3])) then goto continue end
