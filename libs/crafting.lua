@@ -57,7 +57,7 @@ crafting.handCraft = function(recipe)
 end
 
 crafting.craftingTable = function(recipe)
-    local box = Calc.createBox(Home.getHome(), 4)
+    local box = Calc.createBox(Home.getHome(), 3)
     Walk.walkTo(box, 50, 2)
 
     local inv = openInventory()
@@ -73,7 +73,7 @@ crafting.craftingTable = function(recipe)
     if crafting_table == nil then error('No crafting table found') end
 
 
-    local box = Calc.createBox(crafting_table, 1)
+    box = Calc.createBox(crafting_table, 2)
     Walk.walkTo(box, 50, 2)
     lookAt(crafting_table[1]+0.5, crafting_table[2]+0.5, crafting_table[3]+0.5)
     sleep(1000)
