@@ -138,17 +138,15 @@ walk.walkTo = function(to, steps, pathFinderTimeout)
 
         local path = walk.pathFinder(box, pathFinderTimeout)
         if path == nil then
-            break
+            return false
         else
             if #path/steps < 0.6 then -- if the path is simple, sprint
                 sprint(true)
             end
             walk.followPath(path)
             sprint(false)
-
         end
     end
-    return false
 end
 
 return walk
