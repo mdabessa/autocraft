@@ -1,0 +1,4 @@
+*.py
+
+# VS Code
+.vscode
