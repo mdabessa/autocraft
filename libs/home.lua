@@ -69,19 +69,24 @@ home.buildWorkbench = function()
     use()
     sleep(500)
 end
+home.homePlace = function (pos)
+    local block = getBlock(pos[1], pos[2] - 1, pos[3])
+    for i = -1, 1 do
+        for j = -1, 1 do
+            local _pos = {pos[1]+i, pos[2], pos[3]+j}
+            if block == nil or World.walkableBlock(pos, _pos) == false then return false end
+        end
+    end
+    for i = 1, 10 do -- 10 blocks above
+        local _pos = {pos[1], pos[2] + i, pos[3]}
+        block = getBlock(_pos[1], _pos[2], _pos[3])
+        if block ~= nil and block.id ~= 'minecraft:air' then return false end
+    end
+    return true
+end
 
 home.createHome = function()
-    local place = World.searchStructure(function (pos)
-        local block = getBlock(pos[1], pos[2] - 1, pos[3])
-        if block ~= nil and block.id ~= 'minecraft:grass' then return false end
-        for i = -1, 1 do
-            for j = -1, 1 do
-                local _pos = {pos[1]+i, pos[2], pos[3]+j}
-                if block == nil or World.walkableBlock(pos, _pos) == false then return false end
-            end
-        end
-        return true
-    end, 5)
+    local place = World.searchStructure(home.homePlace, 5)
 
     if place == nil then return false end
 

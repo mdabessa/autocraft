@@ -14,6 +14,25 @@ miner.ORES_HARVEST_LEVEL = {
     ["minecraft:obsidian"] = 4
 }
 
+miner.minePlace = {['place'] = nil, ['direction'] = nil}
+
+miner.getMinePlace = function ()
+    if miner.minePlace['place'] == nil then
+        local place = World.searchStructure(miner.minePlaceFinder, 5)
+        if place == nil then error('No place to mine') end
+        miner.setMinePlace({place[1], place[2]+1, place[3]})
+    end
+    return miner.minePlace['place']
+end
+
+miner.setMinePlace = function (place)
+    miner.minePlace['place'] = place
+end
+
+miner.setMineDirection = function (direction)
+    miner.minePlace['direction'] = direction
+end
+
 miner.placeTorch = function ()
     local count_torch = Inventory.countItems('minecraft:torch')
     if count_torch == 0 then
@@ -51,16 +70,20 @@ miner.assertPickaxeLevel = function(block)
     end
 end
 
-miner.minePlace = function(pos)
+miner.minePlaceFinder = function(pos)
     local home = Home.getHome() or {0, 0, 0}
     if Calc.distance3d(pos, home) < 10 then return false end
     local block = getBlock(pos[1], pos[2] - 1, pos[3])
-    if block ~= nil and block.id ~= 'minecraft:grass' then return false end
     for i = -1, 1 do
         for j = -1, 1 do
             local _pos = {pos[1]+i, pos[2], pos[3]+j}
             if block == nil or World.walkableBlock(pos, _pos) == false then return false end
         end
+    end
+    for i = 1, 10 do -- 10 blocks above
+        local _pos = {pos[1], pos[2] + i, pos[3]}
+        block = getBlock(_pos[1], _pos[2], _pos[3])
+        if block ~= nil and block.id ~= 'minecraft:air' then return false end
     end
     return true
 end
@@ -72,7 +95,6 @@ miner.mineDown = function(direction)
     local map = inv.mapping.inventory
     local slot = Inventory.getHotbarSlot('pickaxe')
     local light = getLight(pos[1], pos[2]+1, pos[3])
-    log(light)
     if light < 4 then miner.placeTorch() end
     while true do
         local complete = 0
@@ -102,13 +124,13 @@ end
 miner.mine = function(objective, quantity)
     local count = Inventory.countItems(objective)
     local goal = count + quantity
-    local place = World.searchStructure(miner.minePlace, 5)
+    local place = miner.getMinePlace()
     local directions = {{1,0}, {0,1}, {-1,0}, {0,-1}}
     local possible_directions = {}
 
     for i = 1, #directions do table.insert(possible_directions, directions[i]) end
     local direction_index = math.random(1, #possible_directions)
-    local direction = table.remove(possible_directions, direction_index)
+    local direction = Miner.minePlace['direction'] or table.remove(possible_directions, direction_index)
     local opposite_direction_index = Table.find(possible_directions, {direction[1] * -1, direction[2] * -1})
     table.remove(possible_directions, opposite_direction_index)
 
@@ -126,6 +148,8 @@ miner.mine = function(objective, quantity)
             opposite_direction_index = Table.find(possible_directions, {direction[1] * -1, direction[2] * -1})
             table.remove(possible_directions, opposite_direction_index)
         end
+        miner.setMinePlace(place)
+        miner.setMineDirection(direction)
         local next_pos = miner.mineDown(direction)
         if next_pos ~= nil then place = next_pos end
         count = Inventory.countItems(objective)
