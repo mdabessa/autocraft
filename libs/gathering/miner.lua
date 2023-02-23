@@ -77,6 +77,8 @@ miner.minePlaceFinder = function(pos)
     for i = -1, 1 do
         for j = -1, 1 do
             local _pos = {pos[1]+i, pos[2], pos[3]+j}
+            local _block = getBlock(_pos[1], _pos[2], _pos[3])
+            if _block ~= nil and block.id == 'minecraft:water' then return false end
             if block == nil or World.walkableBlock(pos, _pos) == false then return false end
         end
     end
