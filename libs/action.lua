@@ -4,7 +4,7 @@ action.dig = function()
     local lookingPos = getPlayer().lookingAt
     local actualLookingPos = {lookingPos[1], lookingPos[2], lookingPos[3]}
     local block = getBlock(lookingPos[1], lookingPos[2], lookingPos[3])
-    local tool_slot = Inventory.getToolSlot(block.harvestTool)
+    local tool_slot = Inventory.getHotbarSlot(block.harvestTool)
     setHotbar(tool_slot)
 
     attack(0)

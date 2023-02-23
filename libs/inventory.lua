@@ -5,8 +5,8 @@ inventory.HOTBAR_MAP = {
     [2] = 'pickaxe',
     [3] = 'axe',
     [4] = 'shovel',
-    [5] = nil,
-    [6] = nil,
+    [5] = 'hoe',
+    [6] = 'placeable',
     [7] = nil,
     [8] = nil,
     [9] = nil
@@ -45,7 +45,7 @@ inventory.findItem = function(item_id, map)
     return items
 end
 
-inventory.getToolSlot = function(tool)
+inventory.getHotbarSlot = function(tool)
     local last_nil = 9
     for i = 1, #inventory.HOTBAR_MAP do
         if inventory.HOTBAR_MAP[i] == tool then return i end
@@ -105,7 +105,7 @@ end
 inventory.sortHotbar = function()
     local inv = openInventory()
     local map = inv.mapping.inventory
-
+    sleep(200)
     for i, item in pairs(inventory.HOTBAR_MAP) do
         if item ~= nil then
             local tools = inventory.findTools(item)

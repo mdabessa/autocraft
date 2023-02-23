@@ -60,7 +60,6 @@ home.buildWorkbench = function()
         local block = getBlock(place[1], place[2], place[3])
         if block ~= nil and block.id == 'minecraft:air' then break end
         if c > 5 then break end
-        log('breaking block')
         sleep(200)
         attack(100) -- break any flowers
         c = c + 1
@@ -104,7 +103,7 @@ home.goHome = function()
     log('Going home')
     local homePos = home.getHome()
     local homeBox = Calc.createBox(homePos, 4)
-    Calc.walkTo(homeBox, 50, 10)
+    Walk.walkTo(homeBox, 50, 10)
 end
 
 return home

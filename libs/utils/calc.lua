@@ -42,7 +42,9 @@ end
 calc.compareArray = function(array1, array2)
     if #array1 ~= #array2 then return false end
     for i = 1, #array1 do
-        if array1[i] ~= array2[i] then return false end
+        if type(array1[i]) == "table" then
+            if not calc.compareArray(array1[i], array2[i]) then return false end
+        elseif array1[i] ~= array2[i] then return false end
     end
     return true
 end

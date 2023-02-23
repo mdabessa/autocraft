@@ -3,9 +3,6 @@ local miner = {}
 miner.ORES_HARVEST_LEVEL = {
     ["minecraft:stone"] = 1,
     ["minecraft:cobblestone"] = 1,
-    ["minecraft:granite"] = 1,
-    ["minecraft:diorite"] = 1,
-    ["minecraft:andesite"] = 1,
     ["minecraft:coal_ore"] = 1,
     ["minecraft:iron_ore"] = 2,
     ["minecraft:gold_ore"] = 2,
@@ -17,12 +14,35 @@ miner.ORES_HARVEST_LEVEL = {
     ["minecraft:obsidian"] = 4
 }
 
+miner.placeTorch = function ()
+    local count_torch = Inventory.countItems('minecraft:torch')
+    if count_torch == 0 then
+        Crafting.fastCraft('minecraft:torch', 1)
+        count_torch = Inventory.countItems('minecraft:torch')
+    end
+    local torch = Inventory.findItem('minecraft:torch')
+    if next(torch) ~= nil then
+        local inv = openInventory()
+        local slot, _ = next(torch)
+        local torch_slot = Inventory.getHotbarSlot('placeable')
+        inv.swap(slot, inv.mapping.inventory['hotbar'][torch_slot])
+        sleep(300)
+        setHotbar(torch_slot)
+
+        local pos = getPlayer().pos
+        lookAt(pos[1], pos[2], pos[3])
+        sleep(200)
+        use()
+        sleep(200)
+    end
+end
+
 miner.assertPickaxeLevel = function(block)
     Inventory.sortHotbar()
     local inv = openInventory()
     local map = inv.mapping.inventory
     local pickaxe_level = miner.ORES_HARVEST_LEVEL[block] or 1
-    local slot = Inventory.getToolSlot('pickaxe')
+    local slot = Inventory.getHotbarSlot('pickaxe')
     local item = inv.getSlot(map['hotbar'][slot])
     if not Inventory.isTool(item, 'pickaxe') or Inventory.toolLevel(item.id) < pickaxe_level then
         local pickaxe = Inventory.getToolIdFromLevel('pickaxe', pickaxe_level)
@@ -50,7 +70,10 @@ miner.mineDown = function(direction)
     local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
     local inv = openInventory()
     local map = inv.mapping.inventory
-    local slot = Inventory.getToolSlot('pickaxe')
+    local slot = Inventory.getHotbarSlot('pickaxe')
+    local light = getLight(pos[1], pos[2]+1, pos[3])
+    log(light)
+    if light < 4 then miner.placeTorch() end
     while true do
         local complete = 0
         for i = 0, 3 do
@@ -59,7 +82,7 @@ miner.mineDown = function(direction)
             if i == 3 then layer = -1 end
 
             local item = inv.getSlot(map['hotbar'][slot])
-            if not Inventory.isTool(item, 'pickaxe') then break end
+            if not Inventory.isTool(item, 'pickaxe') then return nil end
 
             local _pos = {pos[1]+direction[1], pos[2] + layer, pos[3]+direction[2]}
             local block = getBlock(_pos[1], _pos[2], _pos[3])
@@ -72,28 +95,42 @@ miner.mineDown = function(direction)
         if complete == 4 then break end
     end
 
-    local box = Calc.createBox({pos[1] + direction[1], pos[2] - 1, pos[3]+direction[2]}, 1)
-    return Walk.walkTo(box, 50, 2)
+    return {pos[1] + direction[1], pos[2] - 1, pos[3]+direction[2]}
 end
+
 
 miner.mine = function(objective, quantity)
     local count = Inventory.countItems(objective)
     local goal = count + quantity
-    miner.assertPickaxeLevel(objective)
-
     local place = World.searchStructure(miner.minePlace, 5)
-
-    local box = Calc.createBox(place, 1)
-    --Walk.walkTo(box, 50, 10)
     local directions = {{1,0}, {0,1}, {-1,0}, {0,-1}}
-    local direction_index = 1
+    local possible_directions = {}
+
+    for i = 1, #directions do table.insert(possible_directions, directions[i]) end
+    local direction_index = math.random(1, #possible_directions)
+    local direction = table.remove(possible_directions, direction_index)
+    local opposite_direction_index = Table.find(possible_directions, {direction[1] * -1, direction[2] * -1})
+    table.remove(possible_directions, opposite_direction_index)
+
     while count < goal do
-        local s = miner.mineDown(directions[direction_index])
-        if s == false then
-            direction_index = direction_index + 1
-            if direction_index > 4 then direction_index = 1 end
+        miner.assertPickaxeLevel(objective)
+        local box = Calc.createBox(place, 1)
+        box = Calc.createBox(place, 1)
+        if Walk.walkTo(box, 50, 5) == false then
+            if #possible_directions == 0 then return false end
+            direction = table.remove(possible_directions, math.random(1, #possible_directions))
+        else
+            for i = 1, #directions do table.insert(possible_directions, directions[i]) end
+            direction_index = Table.find(possible_directions, direction)
+            table.remove(possible_directions, direction_index)
+            opposite_direction_index = Table.find(possible_directions, {direction[1] * -1, direction[2] * -1})
+            table.remove(possible_directions, opposite_direction_index)
         end
+        local next_pos = miner.mineDown(direction)
+        if next_pos ~= nil then place = next_pos end
         count = Inventory.countItems(objective)
+        log('Mining ' .. objective .. ' ' .. count .. '/' .. goal)
+        ::continue::
     end
 end
 

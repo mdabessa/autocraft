@@ -1,5 +1,20 @@
 local crafting = {}
 
+
+crafting.countRecipeItems = function(recipe)
+    local items = {}
+    for i = 1, #recipe do
+        for j = 1, #recipe[i] do
+            local item = recipe[i][j][1]
+            if item ~= nil and next(item) ~= nil then
+                if items[item.id] == nil then items[item.id] = 0 end
+                items[item.id] = items[item.id] + 1
+            end
+        end
+    end
+    return items
+end
+
 crafting.setRecipe = function(recipe, inv, map)
     for i=1, #recipe do
         for j=1, #recipe[i] do
@@ -57,8 +72,7 @@ crafting.handCraft = function(recipe)
 end
 
 crafting.craftingTable = function(recipe)
-    local box = Calc.createBox(Home.getHome(), 3)
-    Walk.walkTo(box, 50, 2)
+    Home.goHome()
 
     local inv = openInventory()
     local map = inv.mapping.inventory
@@ -73,7 +87,7 @@ crafting.craftingTable = function(recipe)
     if crafting_table == nil then error('No crafting table found') end
 
 
-    box = Calc.createBox(crafting_table, 2)
+    local box = Calc.createBox(crafting_table, 2)
     Walk.walkTo(box, 50, 2)
     lookAt(crafting_table[1]+0.5, crafting_table[2]+0.5, crafting_table[3]+0.5)
     sleep(1000)
@@ -86,7 +100,7 @@ crafting.craftingTable = function(recipe)
     sleep(1000)
 
     inv.quick(map.craftingOut)
-    sleep(1000)
+    sleep(2000)
     inv.close()
 end
 
@@ -140,5 +154,23 @@ crafting.craft = function(item_id, quantity)
     end
     error('No recipe or gathering method found for ' .. item_id)
 end
+
+crafting.fastCraft = function (item_id)
+    local recipes = getRecipes(item_id)
+    if recipes['crafting'] == 0 then return false end
+
+    local recipe = recipes['crafting'][1]
+    if not crafting.canCraftInHand(recipe) then return false end
+
+    local items = crafting.countRecipeItems(recipe)
+    for id, count in pairs(items) do
+        local itemsOnInventory = Inventory.countItems(id)
+        if itemsOnInventory < count then return false end
+    end
+
+    crafting.handCraft(recipe)
+    return true
+end
+
 
 return crafting
