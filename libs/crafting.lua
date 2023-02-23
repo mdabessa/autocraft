@@ -132,20 +132,20 @@ crafting.craft = function(item_id, quantity)
 
         local itemsOnInventory = Inventory.countItems(item_id)
         local goal = quantity + itemsOnInventory
-        while itemsOnInventory < goal do
-            if crafting.canCraftInHand(_recipe) then
-                log('crafting in hand: ' .. item_id)
-                crafting.handCraft(_recipe)
-            else
-                log('crafting in table: ' .. item_id)
-                crafting.craftingTable(_recipe)
-            end
-
-            itemsOnInventory = Inventory.countItems(item_id)
-            log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
-
+        if crafting.canCraftInHand(_recipe) then
+            log('crafting in hand: ' .. item_id)
+            crafting.handCraft(_recipe)
+        else
+            log('crafting in table: ' .. item_id)
+            crafting.craftingTable(_recipe)
         end
+
+        itemsOnInventory = Inventory.countItems(item_id)
+        log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
         log('Created ' .. item_id)
+        if itemsOnInventory < goal then
+            crafting.craft(item_id, goal - itemsOnInventory)
+        end
         return
 
     elseif #recipes['furnace'] > 0 then
