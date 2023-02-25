@@ -164,39 +164,4 @@ world.searchInRadius = function(shape)
     return nil
 end
 
-
-world.breakNearbyBlocks = function(block_id, timeout, range)
-    timeout = timeout or 3
-    range = range or 2
-
-    local player = getPlayer()
-    local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
-    local time = os.clock()
-    local block_list = {}
-    while true do
-        if os.clock() - time > timeout then break end
-        for i = -range, range do
-            for j=-range, range do
-                for k=-range, range do
-                    if block_list[{pos[1]+i, pos[2]+j, pos[3]+k}] then goto continue end
-
-                    local block = getBlock(pos[1]+i, pos[2]+j, pos[3]+k)
-                    if block ~= nil and block.id == block_id then
-                        lookAt(pos[1]+i+0.5, pos[2]+j+0.5, pos[3]+k+0.5)
-                        local s = Action.dig()
-                        if s == false then
-                            block_list[{pos[1]+i, pos[2]+j, pos[3]+k}] = true
-                        end
-
-                        time = os.clock()
-                        goto continue
-                    end
-                end
-            end
-        end
-        break
-        :: continue ::
-    end
-end
-
 return world
