@@ -96,12 +96,12 @@ home.createHome = function()
     if count == 0 then Crafting.craft('minecraft:crafting_table') end
 
     local box = Calc.createBox(place, 4)
-    Walk.walkTo(box, 50, 10)
+    Walk.walkTo(box, 50)
     home.setHome(place[1], place[2], place[3])
     local s = home.buildWorkbench()
     if s == false then
         Crafting.craft('minecraft:crafting_table')
-        Walk.walkTo(box, 50, 10)
+        Walk.walkTo(box, 50)
         home.buildWorkbench()
     end
 end
@@ -110,7 +110,7 @@ home.goHome = function()
     log('Going home')
     local homePos = home.getHome()
     local homeBox = Calc.createBox(homePos, 4)
-    Walk.walkTo(homeBox, 50, 10)
+    Walk.walkTo(homeBox, 50)
 end
 
 return home

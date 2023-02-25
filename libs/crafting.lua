@@ -88,7 +88,7 @@ crafting.craftingTable = function(recipe)
 
 
     local box = Calc.createBox(crafting_table, 2)
-    Walk.walkTo(box, 50, 2)
+    Walk.walkTo(box, 50, {nil, nil, 2})
     lookAt(crafting_table[1]+0.5, crafting_table[2]+0.5, crafting_table[3]+0.5)
     sleep(1000)
 

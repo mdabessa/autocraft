@@ -4,7 +4,7 @@ walk.heuristic = function(point1, point2)
     return Calc.distance3d(point1, point2)
 end
 
-walk.pathFinder = function(objective, pathFinderTimeout)
+walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
     pathFinderTimeout = pathFinderTimeout or 10
     local start = os.clock()
 
@@ -37,7 +37,7 @@ walk.pathFinder = function(objective, pathFinderTimeout)
             return path_
         end
 
-        local neighbors_ = World.neighbors(current)
+        local neighbors_ = World.neighbors(current, max_jump, max_fall)
         for _, neighbor in pairs(neighbors_) do
             if not Calc.arrayContainsArray(list_open, neighbor) and
                 not Calc.arrayContainsArray(list_closed, neighbor) then
@@ -115,9 +115,9 @@ walk.followPath = function(path)
     return true
 end
 
-walk.walkTo = function(to, steps, pathFinderTimeout)
+walk.walkTo = function(to, steps, pathFinderArgs)
     steps = steps or 50
-    pathFinderTimeout = pathFinderTimeout or 10
+    pathFinderArgs = pathFinderArgs or {1, 5, 10} -- max_jump, max_fall, pathFinderTimeout
 
     while true do
         local player = getPlayer()
@@ -136,7 +136,7 @@ walk.walkTo = function(to, steps, pathFinderTimeout)
             box[2][2] = 255
         end
 
-        local path = walk.pathFinder(box, pathFinderTimeout)
+        local path = walk.pathFinder(box, table.unpack(pathFinderArgs))
         if path == nil then
             return false
         else

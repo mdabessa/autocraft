@@ -124,9 +124,12 @@ end
 
 
 miner.mine = function(objective, quantity)
+    miner.assertPickaxeLevel(objective)
     local count = Inventory.countItems(objective)
     local goal = count + quantity
     local place = miner.getMinePlace()
+    local box = Calc.createBox(place, 1)
+    if Walk.walkTo(box, 50, {nil, nil, 5}) == false then return false end
     local directions = {{1,0}, {0,1}, {-1,0}, {0,-1}}
     local possible_directions = {}
 
@@ -137,10 +140,8 @@ miner.mine = function(objective, quantity)
     table.remove(possible_directions, opposite_direction_index)
 
     while count < goal do
-        miner.assertPickaxeLevel(objective)
-        local box = Calc.createBox(place, 1)
         box = Calc.createBox(place, 1)
-        if Walk.walkTo(box, 50, 5) == false then
+        if Walk.walkTo(box, 50, {1, 1, 1}) == false then
             if #possible_directions == 0 then return false end
             direction = table.remove(possible_directions, math.random(1, #possible_directions))
         else

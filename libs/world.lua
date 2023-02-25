@@ -103,14 +103,14 @@ world.walkableBlock = function(pos, from, max_jump, max_fall)
     end
 end
 
-world.neighbors = function(current)
+world.neighbors = function(current, max_jump, max_fall)
     local neighbors = {}
     for i = -1, 1 do
         for j = -1, 1 do
             if i == 0 and j == 0 then goto continue end -- No self
 
             local pos = {current[1] + i, current[2], current[3] + j}
-            local block = world.walkableBlock(pos, current)
+            local block = world.walkableBlock(pos, current, max_jump, max_fall)
             if block ~= nil then
                 table.insert(neighbors, block)
             end
@@ -134,8 +134,8 @@ world.searchStructure = function(func, timeout, iterator)
     while true do
         if os.clock() - start > timeout then return nil end
         local pos = iterator()
-        pos = {pos[1] + x, pos[2] + y, pos[3] + z}
         if pos == nil then return nil end
+        pos = {pos[1] + x, pos[2] + y, pos[3] + z}
         local result = func(pos)
         if result then return pos end
     end

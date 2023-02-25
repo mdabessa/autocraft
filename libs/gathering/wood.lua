@@ -24,7 +24,7 @@ wood.collectTree = function(quantity)
         if tree == nil then return false end
         local treeBox = Calc.createBox(tree, {4, 2, 4})
 
-        local success = Walk.walkTo(treeBox, 50, 5)
+        local success = Walk.walkTo(treeBox, 50)
         if success == false then return false end
 
         wood.cutTree()
@@ -35,7 +35,7 @@ wood.collectTree = function(quantity)
             if entity ~= false and string.find(entity.name, 'item.tile.log') then
                 local pos = entity.pos
                 local box = Calc.createBox(pos, 1)
-                Walk.walkTo(box, 50, 1)
+                Walk.walkTo(box, 50)
             end
         end
         count = Inventory.countItems('minecraft:log')
