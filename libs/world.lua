@@ -120,7 +120,7 @@ world.neighbors = function(current)
     return neighbors
 end
 
-world.searchStructure = function(func, timeout, box)
+world.searchStructure = function(func, timeout, iterator)
     timeout = timeout or 5
     local start = os.clock()
     local player = getPlayer()
@@ -128,20 +128,42 @@ world.searchStructure = function(func, timeout, box)
     local x = math.floor(player.pos[1])
     local y = math.floor(player.pos[2])
     local z = math.floor(player.pos[3])
-    box = box or Calc.createBox({x, y, z}, 20)
 
+    iterator = iterator or world.searchInRadius
+    iterator = coroutine.wrap(iterator)
     while true do
         if os.clock() - start > timeout then return nil end
-        for i = box[1][1], box[2][1] do
-            for j = box[1][2], box[2][2] do
-                for k = box[1][3], box[2][3] do
-                    local result = func({i, j, k})
-                    if result then return {i, j, k} end
-                end
+        local pos = iterator()
+        pos = {pos[1] + x, pos[2] + y, pos[3] + z}
+        if pos == nil then return nil end
+        local result = func(pos)
+        if result then return pos end
+    end
+end
+
+world.searchInRadius = function(shape)
+    shape = shape or {16, 5, 16}
+    local points = {}
+    for i = -shape[1], shape[1] do
+        for j = -shape[2], shape[2] do
+            for k = -shape[3], shape[3] do
+                table.insert(points, {i, j, k})
             end
         end
     end
+
+    table.sort(points, function(a, b)
+        return Calc.distance3d(a, {0,0,0}) < Calc.distance3d(b, {0,0,0})
+    end
+    )
+
+    for i = 1, #points do
+        coroutine.yield(points[i])
+    end
+
+    return nil
 end
+
 
 world.breakNearbyBlocks = function(block_id, timeout, range)
     timeout = timeout or 3
