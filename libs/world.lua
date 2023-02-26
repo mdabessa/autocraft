@@ -67,6 +67,21 @@ world.walkableBlock = function(pos, from, max_jump, max_fall)
     max_fall = max_fall or 5
     max_jump = max_jump or 1
     for i = -max_fall, max_jump do
+        if getBlock(pos[1], pos[2]+i-1, pos[3]).id == 'minecraft:water' then
+            local c = i-1
+            while true do
+                c = c + 1
+                if getBlock(pos[1], pos[2]+c, pos[3]).id == 'minecraft:water' then
+                    goto inner_continue
+                end
+                if getBlock(pos[1], pos[2]+c, pos[3]).id == 'minecraft:air' then
+                    return {pos[1], pos[2]+c-1, pos[3]}
+                end
+                do return nil end
+                ::inner_continue::
+            end
+        end
+
         --has space?
         if world.solidBlock(getBlock(pos[1], pos[2]+i, pos[3])) then goto continue end
         if world.solidBlock(getBlock(pos[1], pos[2]+i+1, pos[3])) then goto continue end
@@ -92,9 +107,6 @@ world.walkableBlock = function(pos, from, max_jump, max_fall)
 
         --has floor?
         if getBlock(pos[1], pos[2]+i-1, pos[3]) == nil then goto continue end
-        if getBlock(pos[1], pos[2]+i-1, pos[3]).id == 'minecraft:water' then
-            return {pos[1], pos[2]+i-1, pos[3]}
-        end
         if not world.solidBlock(getBlock(pos[1], pos[2]+i-1, pos[3])) then goto continue end
         if getBlock(pos[1], pos[2]+i-1, pos[3]).id == 'minecraft:lava' then goto continue end
 
@@ -120,7 +132,7 @@ world.neighbors = function(current, max_jump, max_fall)
     return neighbors
 end
 
-world.searchStructure = function(func, timeout, iterator)
+world.searchStructure = function(func, timeout, iterator, shape, step)
     timeout = timeout or 5
     local start = os.clock()
     local player = getPlayer()
@@ -133,7 +145,7 @@ world.searchStructure = function(func, timeout, iterator)
     iterator = coroutine.wrap(iterator)
     while true do
         if os.clock() - start > timeout then return nil end
-        local pos = iterator()
+        local pos = iterator(shape, step)
         if pos == nil then return nil end
         pos = {pos[1] + x, pos[2] + y, pos[3] + z}
         local result = func(pos)
@@ -141,12 +153,16 @@ world.searchStructure = function(func, timeout, iterator)
     end
 end
 
-world.searchInRadius = function(shape)
+world.searchInRadius = function(shape, step)
     shape = shape or {16, 5, 16}
+    step = step or 1
+    if type(shape) == 'number' then shape = {shape, shape, shape} end
+    if type(step) == 'number' then step = {step, step, step} end
+
     local points = {}
-    for i = -shape[1], shape[1] do
-        for j = -shape[2], shape[2] do
-            for k = -shape[3], shape[3] do
+    for i = -shape[1], shape[1], step[1] do
+        for j = -shape[2], shape[2], step[2] do
+            for k = -shape[3], shape[3], step[3] do
                 table.insert(points, {i, j, k})
             end
         end

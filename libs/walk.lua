@@ -124,6 +124,7 @@ walk.walkTo = function(to, steps, pathFinderArgs)
         local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
         local box = to
         local center = Calc.centerBox(to)
+        center[2] = pos[2]
         local dist = Calc.distance3d(player.pos, center)
 
         if Calc.inBox(pos, box) then return true end
