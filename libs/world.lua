@@ -1,56 +1,59 @@
 local world = {}
 
+world.intangibleBlocks = {
+    ['minecraft:air'] = true,
+    ['minecraft:sapling'] = true,
+    ['minecraft:web'] = true,
+    ['minecraft:tallgrass'] = true,
+    ['minecraft:deadbush'] = true,
+    ['minecraft:yellow_flower'] = true,
+    ['minecraft:red_flower'] = true,
+    ['minecraft:brown_mushroom'] = true,
+    ['minecraft:red_mushroom'] = true,
+    ['minecraft:torch'] = true,
+    ['minecraft:snow_layer'] = true,
+    ['minecraft:carpet'] = true,
+    ['minecraft:double_plant'] = true,
+    ['minecraft:painting'] = true,
+    ['minecraft:sign'] = true,
+    ['minecraft:item_frame'] = true,
+    ['minecraft:flower_pot'] = true,
+    ['minecraft:skull'] = true,
+    ['minecraft:banner'] = true,
+    ['minecraft:lever'] = true,
+    ['minecraft:stone_pressure_plate'] = true,
+    ['minecraft:wooden_pressure_plate'] = true,
+    ['minecraft:redstone_torch'] = true,
+    ['minecraft:stone_button'] = true,
+    ['minecraft:tripwire_hook'] = true,
+    ['minecraft:wooden_button'] = true,
+    ['minecraft:light_weighted_pressure_plate'] = true,
+    ['minecraft:heavy_weighted_pressure_plate'] = true,
+    ['minecraft:daylight_detector'] = true,
+    ['minecraft:redstone_wire'] = true,
+    ['minecraft:repeater'] = true,
+    ['minecraft:unpowered_comparator'] = true,
+    ['minecraft:powered_comparator'] = true,
+    ['minecraft:golden_rail'] = true,
+    ['minecraft:detector_rail'] = true,
+    ['minecraft:rail'] = true,
+    ['minecraft:activator_rail'] = true,
+    ['minecraft:tripwire'] = true,
+    ['minecraft:wheat'] = true,
+    ['minecraft:potatoes'] = true,
+    ['minecraft:carrots'] = true,
+    ['minecraft:beetroots'] = true,
+    ['minecraft:melon_stem'] = true,
+    ['minecraft:pumpkin_stem'] = true,
+    ['minecraft:attached_melon_stem'] = true,
+    ['minecraft:attached_pumpkin_stem'] = true,
+    ['minecraft:reeds'] = true
+}
+
 world.solidBlock = function(block)
     if block == nil then return true end
     local block_id = block.id
-
-    if block_id == 'minecraft:air' then return false end
-    if block_id == 'minecraft:sapling' then return false end
-    if block_id == 'minecraft:web' then return false end
-    if block_id == 'minecraft:tallgrass' then return false end
-    if block_id == 'minecraft:deadbush' then return false end
-    if block_id == 'minecraft:yellow_flower' then return false end
-    if block_id == 'minecraft:red_flower' then return false end
-    if block_id == 'minecraft:brown_mushroom' then return false end
-    if block_id == 'minecraft:red_mushroom' then return false end
-    if block_id == 'minecraft:torch' then return false end
-    if block_id == 'minecraft:snow_layer' then return false end
-    if block_id == 'minecraft:carpet' then return false end
-    if block_id == 'minecraft:double_plant' then return false end
-    if block_id == 'minecraft:painting' then return false end
-    if block_id == 'minecraft:sign' then return false end
-    if block_id == 'minecraft:item_frame' then return false end
-    if block_id == 'minecraft:flower_pot' then return false end
-    if block_id == 'minecraft:skull' then return false end
-    if block_id == 'minecraft:banner' then return false end
-    if block_id == 'minecraft:lever' then return false end
-    if block_id == 'minecraft:stone_pressure_plate' then return false end
-    if block_id == 'minecraft:wooden_pressure_plate' then return false end
-    if block_id == 'minecraft:redstone_torch' then return false end
-    if block_id == 'minecraft:stone_button' then return false end
-    if block_id == 'minecraft:tripwire_hook' then return false end
-    if block_id == 'minecraft:wooden_button' then return false end
-    if block_id == 'minecraft:light_weighted_pressure_plate' then return false end
-    if block_id == 'minecraft:heavy_weighted_pressure_plate' then return false end
-    if block_id == 'minecraft:daylight_detector' then return false end
-    if block_id == 'minecraft:redstone_wire' then return false end
-    if block_id == 'minecraft:repeater' then return false end
-    if block_id == 'minecraft:unpowered_comparator' then return false end
-    if block_id == 'minecraft:powered_comparator' then return false end
-    if block_id == 'minecraft:golden_rail' then return false end
-    if block_id == 'minecraft:detector_rail' then return false end
-    if block_id == 'minecraft:rail' then return false end
-    if block_id == 'minecraft:activator_rail' then return false end
-    if block_id == 'minecraft:tripwire' then return false end
-    if block_id == 'minecraft:wheat' then return false end
-    if block_id == 'minecraft:potatoes' then return false end
-    if block_id == 'minecraft:carrots' then return false end
-    if block_id == 'minecraft:beetroots' then return false end
-    if block_id == 'minecraft:melon_stem' then return false end
-    if block_id == 'minecraft:pumpkin_stem' then return false end
-    if block_id == 'minecraft:attached_melon_stem' then return false end
-    if block_id == 'minecraft:attached_pumpkin_stem' then return false end
-    if block_id == 'minecraft:reeds' then return false end
+    if world.intangibleBlocks[block_id] then return false end
 
     if string.find(block_id, 'double_slab') then return true end
     if string.find(block_id, 'slab') then return false end
