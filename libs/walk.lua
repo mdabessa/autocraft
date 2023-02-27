@@ -150,4 +150,17 @@ walk.walkTo = function(to, steps, pathFinderArgs)
     end
 end
 
+walk.walkAway = function ()
+    local player = getPlayer()
+
+    local angle = math.random(0, 360)
+    local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
+    local new_point = Calc.directionToPoint(pos, angle, 50)
+    local box = Calc.createBox(new_point, 10)
+    box[1][2] = 0
+    box[2][2] = 255
+
+    return walk.walkTo(box)
+end
+
 return walk
