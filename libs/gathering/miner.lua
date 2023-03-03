@@ -16,6 +16,7 @@ miner.ORES_HARVEST_LEVEL = {
 
 miner.minePlace = {['place'] = nil, ['direction'] = nil}
 
+
 miner.getMinePlace = function ()
     if miner.minePlace['place'] == nil then
         local place = World.searchStructure(miner.minePlaceFinder, 5)
@@ -122,6 +123,44 @@ miner.mineDown = function(direction)
     return {pos[1] + direction[1], pos[2] - 1, pos[3]+direction[2]}
 end
 
+miner.mineOres = function (direction)
+    local range = 6
+    local pos = getPlayer().pos
+    local slot = Inventory.getHotbarSlot('pickaxe')
+    pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
+
+    for i=0, range-1 do
+        for j=0, 4 do
+            for k=0, range-1 do
+                local dx = i
+                local dy = j
+                local dz = k
+
+                if direction[1] == 0 then dx = i- math.floor(range/2) end
+                if direction[2] == 0 then dz = k- math.floor(range/2) end
+
+                local _pos = {pos[1]+dx, pos[2]+dy, pos[3]+dz}
+                local block = getBlock(_pos[1], _pos[2], _pos[3])
+
+                if block ~= nil and string.find(block.id, 'ore') then
+                    local inv = openInventory()
+                    local map = inv.mapping.inventory
+                    local item = inv.getSlot(map['hotbar'][slot])
+                    if not Inventory.isTool(item, 'pickaxe') then return nil end
+                    if Inventory.toolLevel(item.id) < miner.ORES_HARVEST_LEVEL[block.id] then return nil end
+
+                    local box = Calc.createBox(_pos, {2, 6, 2})
+                    if Walk.walkTo(box, 50, {nil, nil, 0.01}) == false then goto continue end
+                    lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
+                    Action.dig()
+                end
+                ::continue::
+            end
+        end
+    end
+
+end
+
 
 miner.mine = function(objective, quantity)
     miner.assertPickaxeLevel(objective)
@@ -155,6 +194,7 @@ miner.mine = function(objective, quantity)
         miner.setMineDirection(direction)
         local next_pos = miner.mineDown(direction)
         if next_pos ~= nil then place = next_pos end
+        miner.mineOres(direction)
         count = Inventory.countItems(objective)
         log('Mining ' .. objective .. ' ' .. count .. '/' .. goal)
         ::continue::
