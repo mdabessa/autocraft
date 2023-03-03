@@ -137,7 +137,7 @@ walk.walkTo = function(to, steps, pathFinderArgs)
             box[2][2] = 255
         end
 
-        local path = walk.pathFinder(box, table.unpack(pathFinderArgs))
+        local path = walk.pathFinder(box, pathFinderArgs[1], pathFinderArgs[2], pathFinderArgs[3])
         if path == nil then
             return false
         else
