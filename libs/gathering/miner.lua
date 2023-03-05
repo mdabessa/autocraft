@@ -123,44 +123,78 @@ miner.mineDown = function(direction)
     return {pos[1] + direction[1], pos[2] - 1, pos[3]+direction[2]}
 end
 
+miner.mineForward = function(direction)
+    local player = getPlayer()
+    local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
+    local inv = openInventory()
+    local map = inv.mapping.inventory
+    local slot = Inventory.getHotbarSlot('pickaxe')
+    local light = getLight(pos[1], pos[2]+1, pos[3])
+    if light < 4 then miner.placeTorch() end
+    while true do
+        local complete = 0
+        for i = 0, 1 do
+            complete = complete + 1
+
+            local item = inv.getSlot(map['hotbar'][slot])
+            if not Inventory.isTool(item, 'pickaxe') then return nil end
+
+            local _pos = {pos[1]+direction[1], pos[2] + i, pos[3]+direction[2]}
+            local block = getBlock(_pos[1], _pos[2], _pos[3])
+            if block ~= nil and block.id ~= 'minecraft:air' then
+                lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
+                Action.dig()
+                complete = 0
+            end
+        end
+        if complete == 2 then break end
+    end
+
+    return {pos[1] + direction[1], pos[2], pos[3]+direction[2]}
+end
+
 miner.mineOres = function (direction)
     local range = 6
     local pos = getPlayer().pos
     local slot = Inventory.getHotbarSlot('pickaxe')
     pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
 
-    for i=0, range-1 do
-        for j=0, 4 do
-            for k=0, range-1 do
-                local dx = i
-                local dy = j
-                local dz = k
+    while true do
+        local dug = false
+        for i=0, range-1 do
+            for j=0, 4 do
+                for k=0, range-1 do
+                    local dx = i
+                    local dy = j
+                    local dz = k
 
-                if direction[1] == 0 then dx = i- math.floor(range/2) end
-                if direction[2] == 0 then dz = k- math.floor(range/2) end
+                    if direction[1] == 0 then dx = i- math.floor(range/2) end
+                    if direction[2] == 0 then dz = k- math.floor(range/2) end
 
-                local _pos = {pos[1]+dx, pos[2]+dy, pos[3]+dz}
-                local block = getBlock(_pos[1], _pos[2], _pos[3])
+                    local _pos = {pos[1]+dx, pos[2]+dy, pos[3]+dz}
+                    local block = getBlock(_pos[1], _pos[2], _pos[3])
 
-                if block ~= nil and string.find(block.id, 'ore') then
-                    local inv = openInventory()
-                    local map = inv.mapping.inventory
-                    local item = inv.getSlot(map['hotbar'][slot])
-                    if not Inventory.isTool(item, 'pickaxe') then return nil end
-                    if Inventory.toolLevel(item.id) < miner.ORES_HARVEST_LEVEL[block.id] then return nil end
+                    if block ~= nil and string.find(block.id, 'ore') then
+                        local inv = openInventory()
+                        local map = inv.mapping.inventory
+                        local item = inv.getSlot(map['hotbar'][slot])
+                        if not Inventory.isTool(item, 'pickaxe') then return nil end
+                        if Inventory.toolLevel(item.id) < miner.ORES_HARVEST_LEVEL[block.id] then return nil end
 
-                    local box = Calc.createBox(_pos, {2, 6, 2})
-                    if Walk.walkTo(box, 50, {nil, nil, 0.01}) == false then goto continue end
-                    lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
-                    Action.dig()
+                        local box = Calc.createBox(_pos, {2, 6, 2})
+                        if Walk.walkTo(box, 50, {nil, nil, 0.01}) == false then goto continue end
+                        lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
+                        Action.dig()
+                        dug = true
+                    end
+                    ::continue::
                 end
-                ::continue::
             end
         end
+        Action.pickupNearbyItems('item')
+        if dug == false then break end
     end
-
 end
-
 
 miner.mine = function(objective, quantity)
     miner.assertPickaxeLevel(objective)
@@ -192,7 +226,14 @@ miner.mine = function(objective, quantity)
         end
         miner.setMinePlace(place)
         miner.setMineDirection(direction)
-        local next_pos = miner.mineDown(direction)
+        local next_pos = nil
+
+        if getPlayer().pos[2] > 11 then
+            next_pos = miner.mineDown(direction)
+        else
+            next_pos = miner.mineForward(direction)
+        end
+
         if next_pos ~= nil then place = next_pos end
         miner.mineOres(direction)
         count = Inventory.countItems(objective)
