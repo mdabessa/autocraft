@@ -54,14 +54,18 @@ action.breakNearbyBlocks = function(block_id, timeout, range)
     end
 end
 
-action.pickupNearbyItems = function(item_entity_id)
+action.pickupNearbyItems = function(item_entity_id, distance)
+    distance = distance or 5
     local entities = getEntityList()
     for i = 1, #entities do
         local entity = getEntity(entities[i].id)
         if entity ~= false and string.find(entity.name, item_entity_id) then
             local pos = entity.pos
-            local box = Calc.createBox(pos, 1.2)
-            Walk.walkTo(box, 50, {1, 5, 1})
+            local player = getPlayer().pos
+            if Calc.distance3d(pos, player) < distance then
+                local box = Calc.createBox(pos, 1.2)
+                Walk.walkTo(box, 50, {1, 5, 1})
+            end
         end
     end
 end
