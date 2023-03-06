@@ -75,12 +75,16 @@ miner.minePlaceFinder = function(pos)
     local home = Home.getHome() or {0, 0, 0}
     if Calc.distance3d(pos, home) < 10 then return false end
     local block = getBlock(pos[1], pos[2] - 1, pos[3])
+    if block == nil then return false end
     for i = -1, 1 do
         for j = -1, 1 do
             local _pos = {pos[1]+i, pos[2], pos[3]+j}
             local _block = getBlock(_pos[1], _pos[2], _pos[3])
-            if _block ~= nil and block.id == 'minecraft:water' then return false end
-            if block == nil or World.walkableBlock(pos, _pos) == false then return false end
+            if _block == nil then return false end
+            if _block.id == 'minecraft:water' then return false end
+            if _block.id == 'minecraft:air' then return false end
+            if World.walkableBlock({pos[1], pos[2]+1, pos[3]}, {_pos[1], _pos[2]+1, _pos[3]})
+                == false then return false end
         end
     end
     for i = 1, 10 do -- 10 blocks above
@@ -201,7 +205,7 @@ miner.mine = function(objective, quantity)
     local count = Inventory.countItems(objective)
     local goal = count + quantity
     local place = miner.getMinePlace()
-    local box = Calc.createBox(place, 1)
+    local box = Calc.createBox(place, {1,2,1})
     if Walk.walkTo(box, 50, {nil, nil, 5}) == false then return false end
     local directions = {{1,0}, {0,1}, {-1,0}, {0,-1}}
     local possible_directions = {}
@@ -213,7 +217,7 @@ miner.mine = function(objective, quantity)
     table.remove(possible_directions, opposite_direction_index)
 
     while count < goal do
-        box = Calc.createBox(place, 1)
+        box = Calc.createBox(place, {1,2,1})
         if Walk.walkTo(box, 50, {1, 1, 1}) == false then
             if #possible_directions == 0 then return false end
             direction = table.remove(possible_directions, math.random(1, #possible_directions))
