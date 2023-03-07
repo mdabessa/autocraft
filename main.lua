@@ -5,5 +5,6 @@ if Home.getHome() == nil then
     Home.createHome()
 end
 
-Crafting.craft('minecraft:furnace', 2)
+Crafting.craft('minecraft:iron_sword', 1)
+
 log('Done!')
