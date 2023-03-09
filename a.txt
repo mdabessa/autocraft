@@ -1,2 +1,0 @@
-git comment:
-perf: yield the coordinates from center out instead of yield and then sort
