@@ -162,24 +162,74 @@ world.searchInRadius = function(shape, step)
     if type(shape) == 'number' then shape = {shape, shape, shape} end
     if type(step) == 'number' then step = {step, step, step} end
 
-    local points = {}
-    for i = -shape[1], shape[1], step[1] do
-        for j = -shape[2], shape[2], step[2] do
-            for k = -shape[3], shape[3], step[3] do
-                table.insert(points, {i, j, k})
+    local m = math.max(shape[1], shape[2], shape[3])
+    for i = 0, m do
+        for j = -i, i do
+            if j > shape[1] or j < -shape[1] then
+                goto continue1
             end
+            for k = -i, i do
+                if k > shape[2] or k < -shape[2] then
+                    goto continue2
+                end
+                for l = -i, i do
+                    if l > shape[3] or l < -shape[3] then
+                        goto continue3
+                    end
+
+                    coroutine.yield({j, k, l})
+
+                    ::continue3::
+                end
+                ::continue2::
+            end
+            ::continue1::
+        end
+
+        for j = -i+1, i do
+            if j > shape[1] or j < -shape[1] then
+                goto continue1
+            end
+            for k = -i, i do
+                if k > shape[2] or k < -shape[2] then
+                    goto continue2
+                end
+                for l = -i, i do
+                    if l > shape[3] or l < -shape[3] then
+                        goto continue3
+                    end
+
+                    coroutine.yield({j, k, l})
+
+                    ::continue3::
+                end
+                ::continue2::
+            end
+            ::continue1::
+        end
+
+        for j = -i+1, i do
+            if j > shape[1] or j < -shape[1] then
+                goto continue1
+            end
+            for k = -i+1, i do
+                if k > shape[2] or k < -shape[2] then
+                    goto continue2
+                end
+                for l = -i, i do
+                    if l > shape[3] or l < -shape[3] then
+                        goto continue3
+                    end
+
+                    coroutine.yield({j, k, l})
+
+                    ::continue3::
+                end
+                ::continue2::
+            end
+            ::continue1::
         end
     end
-
-    table.sort(points, function(a, b)
-        return Calc.distance3d(a, {0,0,0}) < Calc.distance3d(b, {0,0,0})
-    end
-    )
-
-    for i = 1, #points do
-        coroutine.yield(points[i])
-    end
-
     return nil
 end
 
