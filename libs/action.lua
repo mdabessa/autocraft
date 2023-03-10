@@ -13,7 +13,10 @@ action.dig = function()
     while Calc.compareArray(actualLookingPos, lookingPos) do
         attack(-1)
         actualLookingPos = getPlayer().lookingAt
-        if os.clock() - start > 5 then return false end
+        if os.clock() - start > 5 then
+            attack(0)
+            return false
+        end
     end
     attack(0)
     return true
