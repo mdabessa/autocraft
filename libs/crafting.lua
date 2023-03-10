@@ -119,14 +119,14 @@ crafting.craftingTable = function(recipe)
     local inv = openInventory()
     local map = inv.mapping.inventory
 
-    local crafting_table = World.searchStructure(function (pos)
-        local block = getBlock(pos[1], pos[2], pos[3])
-        if block ~= nil and block.id == 'minecraft:crafting_table' then return true end
-        return false
-    end
-    ,10)
+    local crafting_table = World.searchBlock('minecraft:crafting_table', 2)
 
-    if crafting_table == nil then error('No crafting table found') end
+    if crafting_table == nil then
+        Home.buildCraftingTable()
+        crafting_table = World.searchBlock('minecraft:crafting_table', 2)
+
+        if crafting_table == nil then error('No crafting table found') end
+    end
 
 
     local box = Calc.createBox(crafting_table, 2)
@@ -149,22 +149,12 @@ end
 crafting.furnaceCraft = function(recipe)
     Home.goHome()
 
-    local furnace = World.searchStructure(function (pos)
-        local block = getBlock(pos[1], pos[2], pos[3])
-        if block ~= nil and block.id == 'minecraft:furnace' then return true end
-        return false
-    end
-    ,3)
+    local furnace = World.searchBlock('minecraft:furnace', 2)
 
     if furnace == nil then
         Home.buildFurnace()
+        furnace = World.searchBlock('minecraft:furnace', 2)
 
-        furnace = World.searchStructure(function (pos)
-            local block = getBlock(pos[1], pos[2], pos[3])
-            if block ~= nil and block.id == 'minecraft:furnace' then return true end
-            return false
-        end
-        ,3)
         if furnace == nil then error('No furnace found') end
     end
 

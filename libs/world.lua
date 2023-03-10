@@ -156,6 +156,17 @@ world.searchStructure = function(func, timeout, iterator, shape, step)
     end
 end
 
+world.searchBlock = function(block_id, timeout, iterator, shape, step)
+    return world.searchStructure(function(pos)
+        local block = getBlock(pos[1], pos[2], pos[3])
+        if block ~= nil and block.id == block_id then
+            return true
+        end
+        return false
+    end, timeout, iterator, shape, step)
+end
+
+
 world.searchInRadius = function(shape, step)
     shape = shape or {16, 5, 16}
     step = step or 1
