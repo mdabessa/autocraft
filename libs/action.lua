@@ -16,7 +16,24 @@ action.dig = function()
         if os.clock() - start > 5 then return false end
     end
     attack(0)
+    return true
+end
 
+action.safeDig = function()
+    local lookingPos = getPlayer().lookingAt
+
+    for i=-1, 1, 2 do
+        for j=1, 3 do
+            local pos = {lookingPos[1], lookingPos[2], lookingPos[3]}
+            pos[j] = pos[j] + i
+            local block = getBlock(pos[1], pos[2], pos[3])
+            if block == nil then return false end
+            if block.id == 'minecraft:water' or block.id == 'minecraft:lava' then
+                return false
+            end
+        end
+    end
+    return action.dig()
 end
 
 action.breakNearbyBlocks = function(block_id, timeout, range)

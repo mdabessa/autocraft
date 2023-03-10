@@ -102,6 +102,7 @@ miner.mineDown = function(direction)
     local map = inv.mapping.inventory
     local slot = Inventory.getHotbarSlot('pickaxe')
     local light = getLight(pos[1], pos[2]+1, pos[3])
+
     if light < 4 then miner.placeTorch() end
     while true do
         local complete = 0
@@ -117,8 +118,9 @@ miner.mineDown = function(direction)
             local block = getBlock(_pos[1], _pos[2], _pos[3])
             if block ~= nil and block.id ~= 'minecraft:air' then
                 lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
-                Action.dig()
-                complete = 0
+                if Action.safeDig() then
+                    complete = 0
+                end
             end
         end
         if complete == 4 then break end
@@ -147,8 +149,9 @@ miner.mineForward = function(direction)
             local block = getBlock(_pos[1], _pos[2], _pos[3])
             if block ~= nil and block.id ~= 'minecraft:air' then
                 lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
-                Action.dig()
-                complete = 0
+                if Action.safeDig() then
+                    complete = 0
+                end
             end
         end
         if complete == 2 then break end
@@ -188,8 +191,9 @@ miner.mineOres = function (direction)
                         local box = Calc.createBox(_pos, {2, 6, 2})
                         if Walk.walkTo(box, 50, {nil, nil, 0.01}) == false then goto continue end
                         lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
-                        Action.dig()
-                        dug = true
+                        if Action.safeDig() then
+                            dug = true
+                        end
                     end
                     ::continue::
                 end
