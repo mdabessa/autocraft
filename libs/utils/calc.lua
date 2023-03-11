@@ -91,4 +91,19 @@ calc.centerBox = function(box)
     return centerPoint
 end
 
+calc.range = function(start, stop, step)
+    if start == nil then return {} end
+    if start > stop then return {} end
+    if stop == nil then stop = start start = 1 end
+
+    step = step or 1
+
+
+    local range = {}
+    for i = start, stop, step do
+        table.insert(range, i)
+    end
+    return range
+end
+
 return calc

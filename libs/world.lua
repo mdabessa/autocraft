@@ -152,7 +152,11 @@ world.searchStructure = function(func, timeout, iterator, shape, step)
         if pos == nil then return nil end
         pos = {pos[1] + x, pos[2] + y, pos[3] + z}
         local result = func(pos)
-        if result then return pos end
+
+        if result == false then goto continue end
+        if type(result) == 'table' then return result else return pos end
+
+        :: continue ::
     end
 end
 
@@ -166,7 +170,6 @@ world.searchBlock = function(block_id, timeout, iterator, shape, step)
     end, timeout, iterator, shape, step)
 end
 
-
 world.searchInRadius = function(shape, step)
     shape = shape or {16, 5, 16}
     step = step or 1
@@ -174,74 +177,34 @@ world.searchInRadius = function(shape, step)
     if type(step) == 'number' then step = {step, step, step} end
 
     local m = math.max(shape[1], shape[2], shape[3])
-    for i = 0, m do
-        for j = -i, i do
-            if j > shape[1] or j < -shape[1] then
-                goto continue1
-            end
-            for k = -i, i do
-                if k > shape[2] or k < -shape[2] then
-                    goto continue2
-                end
-                for l = -i, i do
-                    if l > shape[3] or l < -shape[3] then
-                        goto continue3
+
+    for i = 1, m do
+        local ranges = {
+            Calc.range(-i, i),
+            Calc.range(-i, i),
+            Calc.range(-i, i)
+        }
+
+        for axis = 1, 3 do
+            ranges[axis] = {-i, i}
+            for _, x in ipairs(ranges[1]) do
+                if x > shape[1] or x < -shape[1] then goto continue1 end
+                for _, y in ipairs(ranges[2]) do
+                    if y > shape[2] or y < -shape[2] then goto continue2 end
+                    for _, z in ipairs(ranges[3]) do
+                        if z > shape[3] or z < -shape[3] then goto continue3 end
+                        if x % step[1] == 0 and y % step[2] == 0 and z % step[3] == 0 then
+                            coroutine.yield({x, y, z})
+                        end
+                        ::continue3::
                     end
-
-                    coroutine.yield({j, k, l})
-
-                    ::continue3::
+                    ::continue2::
                 end
-                ::continue2::
+                ::continue1::
             end
-            ::continue1::
-        end
-
-        for j = -i+1, i do
-            if j > shape[1] or j < -shape[1] then
-                goto continue1
-            end
-            for k = -i, i do
-                if k > shape[2] or k < -shape[2] then
-                    goto continue2
-                end
-                for l = -i, i do
-                    if l > shape[3] or l < -shape[3] then
-                        goto continue3
-                    end
-
-                    coroutine.yield({j, k, l})
-
-                    ::continue3::
-                end
-                ::continue2::
-            end
-            ::continue1::
-        end
-
-        for j = -i+1, i do
-            if j > shape[1] or j < -shape[1] then
-                goto continue1
-            end
-            for k = -i+1, i do
-                if k > shape[2] or k < -shape[2] then
-                    goto continue2
-                end
-                for l = -i, i do
-                    if l > shape[3] or l < -shape[3] then
-                        goto continue3
-                    end
-
-                    coroutine.yield({j, k, l})
-
-                    ::continue3::
-                end
-                ::continue2::
-            end
-            ::continue1::
+            ranges[axis] = Calc.range(-i+1, i-1) -- remove duplicates corners
         end
     end
-    return nil
 end
 
 return world
