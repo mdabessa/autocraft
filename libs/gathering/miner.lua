@@ -221,6 +221,7 @@ miner.mine = function(objective, quantity)
     table.remove(possible_directions, opposite_direction_index)
 
     while count < goal do
+        miner.assertPickaxeLevel(objective)
         box = Calc.createBox(place, {1,2,1})
         if Walk.walkTo(box, 50, {1, 1, 1}) == false then
             if #possible_directions == 0 then return false end
@@ -242,7 +243,9 @@ miner.mine = function(objective, quantity)
             next_pos = miner.mineForward(direction)
         end
 
-        if next_pos ~= nil then place = next_pos end
+        if next_pos == nil then goto continue end
+        place = next_pos
+
         miner.mineOres(direction)
         count = Inventory.countItems(objective)
         log('Mining ' .. objective .. ' ' .. count .. '/' .. goal)
