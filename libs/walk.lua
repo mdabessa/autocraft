@@ -14,17 +14,24 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
 
     if Calc.inBox(start_pos, objective) then return {} end
 
-    local list_open = { start_pos }
+    local list_open = {
+        {
+            ['pos'] = {start_pos[1], start_pos[2], start_pos[3]},
+            ['heuristic'] = walk.heuristic(start_pos, end_pos)
+        }
+    }
     local list_closed = {}
+    local list_open_ref = {}
+
     local grid = {}
 
     while #list_open > 0 do
         if os.clock() - start > pathFinderTimeout then return nil end
         local current = table.remove(list_open, 1)
 
-        if Calc.inBox(current, objective) then
+        if Calc.inBox(current['pos'], objective) then
             local path = {}
-            local cell = {current[1], current[2], current[3]}
+            local cell = {current['pos'][1], current['pos'][2], current['pos'][3]}
             while Calc.compareArray(cell, start_pos) == false do
                 table.insert(path, cell)
                 cell = grid[Calc.pointToStr(cell)]
@@ -37,20 +44,23 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
             return path_
         end
 
-        local neighbors_ = World.neighbors(current, max_jump, max_fall)
+        local neighbors_ = World.neighbors(current['pos'], max_jump, max_fall)
         for _, neighbor in pairs(neighbors_) do
-            if not Calc.arrayContainsArray(list_open, neighbor) and
-                not Calc.arrayContainsArray(list_closed, neighbor) then
+            if list_open_ref[Calc.pointToStr(neighbor)] == nil and
+                list_closed[Calc.pointToStr(neighbor)] == nil then
 
-                table.insert(list_open, neighbor)
-                grid[Calc.pointToStr(neighbor)] = {current[1], current[2], current[3]}
+                local weight = walk.heuristic(neighbor, end_pos)
+                local node = {['pos'] = neighbor, ['heuristic'] = weight}
+
+                local index = Calc.binary_search(list_open, node, function(x) return x['heuristic'] end)
+                table.insert(list_open, index, node)
+
+                list_open_ref[Calc.pointToStr(neighbor)] = true
+                grid[Calc.pointToStr(neighbor)] = {current['pos'][1], current['pos'][2], current['pos'][3]}
             end
         end
 
-        table.insert(list_closed, current)
-        table.sort(list_open, function(a, b)
-            return walk.heuristic(a, end_pos) < walk.heuristic(b, end_pos)
-        end)
+        list_closed[Calc.pointToStr(current['pos'])] = true
     end
     log("Path not found")
 end
@@ -132,7 +142,7 @@ walk.walkTo = function(to, steps, pathFinderArgs)
         if dist > steps then
             local angle = Calc.direction(pos, center)
             local new_point = Calc.directionToPoint(pos, angle, steps)
-            box = Calc.createBox(new_point, 60)
+            box = Calc.createBox(new_point, 10)
             box[1][2] = 0
             box[2][2] = 255
         end
@@ -150,12 +160,13 @@ walk.walkTo = function(to, steps, pathFinderArgs)
     end
 end
 
-walk.walkAway = function ()
+walk.walkAway = function (distance, angle)
+    distance = distance or 50
     local player = getPlayer()
 
-    local angle = math.random(0, 360)
+    angle = angle or math.random(0, 360)
     local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
-    local new_point = Calc.directionToPoint(pos, angle, 50)
+    local new_point = Calc.directionToPoint(pos, angle, distance)
     local box = Calc.createBox(new_point, 10)
     box[1][2] = 0
     box[2][2] = 255

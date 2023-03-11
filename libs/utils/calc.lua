@@ -106,4 +106,21 @@ calc.range = function(start, stop, step)
     return range
 end
 
+calc.binary_search = function(a, x, func)
+    func = func or function(i) return i end
+    local l = 1
+    local r = #a
+    while l <= r do
+        local m = math.floor((l + r) / 2)
+        if func(a[m]) < func(x) then
+            l = m + 1
+        elseif func(a[m]) > func(x) then
+            r = m - 1
+        else
+            return m
+        end
+    end
+    return l
+end
+
 return calc
