@@ -112,4 +112,53 @@ action.lookAtBlock = function(x,y,z)
 
 end
 
+action.blockIsVisible = function(x,y,z, resolution)
+    resolution = resolution or 10 -- resolution is the number that multiplies the steps to check from the player to the block
+
+    local obj = {x, y, z}
+    local pos = {getPlayer().pos[1], getPlayer().pos[2]+1, getPlayer().pos[3]}
+    local delta = {obj[1] - pos[1], obj[2] - pos[2], obj[3] - pos[3]}
+
+    for i=1, 3 do
+        local posL = {}
+        for j = 1, 3 do
+            if obj[j] > 0 then
+                table.insert(posL, obj[j] +0.5)
+            else
+                table.insert(posL, obj[j] -0.5)
+            end
+        end
+
+        if delta[i] == 0 then
+            goto continue
+        else
+            local s1 = delta[i] / math.abs(delta[i])
+            posL[i] = posL[i] - s1
+        end
+
+        local d = {posL[1] - pos[1], posL[2] - pos[2], posL[3] - pos[3]}
+        local step = math.max(math.abs(d[1]), math.abs(d[2]), math.abs(d[3])) * resolution
+
+        while true do
+            pos = {pos[1] + d[1] / step, pos[2] + d[2] / step, pos[3] + d[3] / step}
+
+            local matches = 0
+            for j=1, 3 do
+                if math.floor(pos[j]) == math.floor(posL[j]) then
+                    matches = matches + 1
+                end
+            end
+            if matches == 3 then break end
+
+            local block = getBlock(pos[1], pos[2], pos[3])
+            if block == nil or block == false or block.id ~= 'minecraft:air' then
+                goto continue
+            end
+        end
+        do return true end
+        :: continue ::
+    end
+    return false
+end
+
 return action

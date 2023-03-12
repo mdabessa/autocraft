@@ -161,16 +161,16 @@ miner.mineForward = function(direction)
 end
 
 miner.mineOres = function (direction)
-    local range = 6
+    local range = 5
     local pos = getPlayer().pos
     local slot = Inventory.getHotbarSlot('pickaxe')
     pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
 
     while true do
         local dug = false
-        for i=0, range-1 do
-            for j=0, 4 do
-                for k=0, range-1 do
+        for i=-range, range do
+            for j=-range, range do
+                for k=-range, range do
                     local dx = i
                     local dy = j
                     local dz = k
@@ -185,11 +185,13 @@ miner.mineOres = function (direction)
                         local inv = openInventory()
                         local map = inv.mapping.inventory
                         local item = inv.getSlot(map['hotbar'][slot])
+
                         if not Inventory.isTool(item, 'pickaxe') then return nil end
                         if Inventory.toolLevel(item.id) < miner.ORES_HARVEST_LEVEL[block.id] then return nil end
+                        if Action.blockIsVisible(_pos[1], _pos[2], _pos[3]) == false then goto continue end
 
                         local box = Calc.createBox(_pos, {2, 6, 2})
-                        if Walk.walkTo(box, 50, {nil, nil, 0.01}) == false then goto continue end
+                        if Walk.walkTo(box, 50, {nil, nil, 0.1}) == false then goto continue end
                         lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
                         if Action.safeDig() then
                             dug = true
