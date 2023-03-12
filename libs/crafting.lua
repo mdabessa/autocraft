@@ -122,7 +122,7 @@ crafting.craftingTable = function(recipe)
     local crafting_table = World.searchBlock('minecraft:crafting_table', 2)
 
     if crafting_table == nil then
-        Home.buildCraftingTable()
+        Home.buildWorkbench()
         crafting_table = World.searchBlock('minecraft:crafting_table', 2)
 
         if crafting_table == nil then error('No crafting table found') end
