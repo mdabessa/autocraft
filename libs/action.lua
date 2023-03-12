@@ -90,4 +90,26 @@ action.pickupNearbyItems = function(item_entity_id, distance)
     end
 end
 
+action.lookAtBlock = function(x,y,z)
+    local pos = {x, y, z}
+    lookAt(pos[1]+0.5, pos[2]+0.5, pos[3]+0.5)
+    sleep(100)
+    local actual = getPlayer().lookingAt
+
+    for i = 1, 3 do
+        for j = -1, 1, 2 do
+            local block = getBlock(pos[1], pos[2], pos[3])
+            local _block = getBlock(actual[1], actual[2], actual[3])
+            if block.id == _block.id then return end
+
+            local _pos = {pos[1]+0.5, pos[2]+0.5, pos[3]+0.5}
+            _pos[i] = _pos[i] + (0.5*j)
+            lookAt(_pos[1], _pos[2], _pos[3])
+            sleep(100)
+            actual = getPlayer().lookingAt
+        end
+    end
+
+end
+
 return action

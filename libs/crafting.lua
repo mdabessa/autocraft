@@ -131,7 +131,7 @@ crafting.craftingTable = function(recipe)
 
     local box = Calc.createBox(crafting_table, 2)
     Walk.walkTo(box, 50, {nil, nil, 2})
-    lookAt(crafting_table[1]+0.5, crafting_table[2]+0.5, crafting_table[3]+0.5)
+    Action.lookAtBlock(crafting_table[1], crafting_table[2], crafting_table[3])
     sleep(1000)
 
     use()
@@ -164,7 +164,7 @@ crafting.furnaceCraft = function(recipe)
 
     Walk.walkTo(box, 50, {nil, nil, 2})
 
-    lookAt(furnace[1]+0.5, furnace[2]+0.5, furnace[3]+0.5)
+    Action.lookAtBlock(furnace[1], furnace[2], furnace[3])
     sleep(1000)
     use()
     sleep(1000)
