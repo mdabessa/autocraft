@@ -50,9 +50,51 @@ walk.intangibleBlocks = {
     ['minecraft:reeds'] = true
 }
 
-walk.solidBlock = function(block)
-    if block == nil then return true end
-    local block_id = block.id
+walk.placeableBlocks = {
+    ['minecraft:dirt'] = true,
+    ['minecraft:cobblestone'] = true,
+    ['minecraft:planks'] = true,
+}
+
+walk.fastPlace = function ()
+    local inv = openInventory()
+    local map = inv.mapping.inventory
+    local slot = map.hotbar[Inventory.getHotbarSlot('placeable')]
+    local item = inv.getSlot(slot)
+
+    if not walk.placeableBlocks[item] then
+        local success = false
+        for i, _ in pairs(walk.placeableBlocks) do
+            item = Inventory.findItem(i)
+            if next(item) ~= nil then
+                local _slot, _ = next(item)
+                inv.swap(slot, _slot)
+                setHotbar(Inventory.getHotbarSlot('placeable'))
+                sleep(100)
+                success = true
+                break
+            end
+        end
+        if not success then return false end
+    end
+    use()
+    sleep(100)
+    return true
+end
+
+walk.getBlockId = function(pos, mask)
+    if mask == nil then mask = {} end
+
+    if mask[Calc.pointToStr(pos)] ~= nil then
+        return mask[Calc.pointToStr(pos)]
+    end
+
+    local block = getBlock(pos[1], pos[2], pos[3])
+    if block == nil then return nil end
+    return block.id
+end
+
+walk.solidBlock = function(block_id)
     if walk.intangibleBlocks[block_id] then return false end
 
     if string.find(block_id, 'double_slab') then return true end
@@ -61,7 +103,7 @@ walk.solidBlock = function(block)
     return true
 end
 
-walk.walkableBlock = function(pos, from, max_jump, max_fall)
+walk.walkableBlock = function(pos, from, max_jump, max_fall, mask)
     -- Check if the position is walkable and return the position.
     -- If it is a position that has to be make a extra moviment, like jumping or falling,
     -- it will be necessary to return the position that the player will be after the moviment.
@@ -70,14 +112,15 @@ walk.walkableBlock = function(pos, from, max_jump, max_fall)
     max_fall = max_fall or 5
     max_jump = max_jump or 1
     for i = -max_fall, max_jump do
-        if getBlock(pos[1], pos[2]+i-1, pos[3]).id == 'minecraft:water' then
+        -- water
+        if walk.getBlockId({pos[1], pos[2]+i-1, pos[3]}, mask) == 'minecraft:water' then
             local c = i-1
             while true do
                 c = c + 1
-                if getBlock(pos[1], pos[2]+c, pos[3]).id == 'minecraft:water' then
+                if walk.getBlockId({pos[1], pos[2]+c, pos[3]}, mask) == 'minecraft:water' then
                     goto inner_continue
                 end
-                if getBlock(pos[1], pos[2]+c, pos[3]).id == 'minecraft:air' then
+                if walk.getBlockId({pos[1], pos[2]+c, pos[3]}, mask) == 'minecraft:air' then
                     return {pos[1], pos[2]+c-1, pos[3]}
                 end
                 do return nil end
@@ -85,33 +128,34 @@ walk.walkableBlock = function(pos, from, max_jump, max_fall)
             end
         end
 
-        --has space?
-        if walk.solidBlock(getBlock(pos[1], pos[2]+i, pos[3])) then goto continue end
-        if walk.solidBlock(getBlock(pos[1], pos[2]+i+1, pos[3])) then goto continue end
-        -- is diagonal?
-        if pos[1] ~= from[1] and pos[3] ~= from[3] then
-            if walk.solidBlock(getBlock(pos[1], from[2], from[3])) then goto continue end
-            if walk.solidBlock(getBlock(pos[1], from[2]+1, from[3])) then goto continue end
+        -- space to walk
+        if walk.solidBlock(walk.getBlockId({pos[1], pos[2]+i, pos[3]}, mask)) then goto continue end
+        if walk.solidBlock(walk.getBlockId({pos[1], pos[2]+i+1, pos[3]}, mask)) then goto continue end
 
-            if walk.solidBlock(getBlock(from[1], from[2], pos[3])) then goto continue end
-            if walk.solidBlock(getBlock(from[1], from[2]+1, pos[3])) then goto continue end
+        -- diagonal
+        if pos[1] ~= from[1] and pos[3] ~= from[3] then
+            if walk.solidBlock(walk.getBlockId({pos[1], from[2], from[3]}, mask)) then goto continue end
+            if walk.solidBlock(walk.getBlockId({pos[1], from[2]+1, from[3]}, mask)) then goto continue end
+
+            if walk.solidBlock(walk.getBlockId({from[1], from[2], pos[3]}, mask)) then goto continue end
+            if walk.solidBlock(walk.getBlockId({from[1], from[2]+1, pos[3]}, mask)) then goto continue end
         end
 
         if i < 0 then
             for j = i, 0 do -- space to fall
-                if walk.solidBlock(getBlock(pos[1], pos[2]+j+1, pos[3])) then goto continue end
+                if walk.solidBlock(walk.getBlockId({pos[1], pos[2]+j+1, pos[3]}, mask)) then goto continue end
             end
         elseif i > 0 then
             for j = 0, i do -- space to jump
-                if walk.solidBlock(getBlock(pos[1], pos[2]+j+i, pos[3])) then goto continue end
-                if walk.solidBlock(getBlock(from[1], from[2]+j+i, from[3])) then goto continue end
+                if walk.solidBlock(walk.getBlockId({pos[1], pos[2]+j+i, pos[3]}, mask)) then goto continue end
+                if walk.solidBlock(walk.getBlockId({from[1], from[2]+j+i, from[3]}, mask)) then goto continue end
             end
         end
 
-        --has floor?
-        if getBlock(pos[1], pos[2]+i-1, pos[3]) == nil then goto continue end
-        if not walk.solidBlock(getBlock(pos[1], pos[2]+i-1, pos[3])) then goto continue end
-        if getBlock(pos[1], pos[2]+i-1, pos[3]).id == 'minecraft:lava' then goto continue end
+        -- floor to walk
+        if walk.getBlockId({pos[1], pos[2]+i-1, pos[3]}, mask) == nil then goto continue end
+        if not walk.solidBlock(walk.getBlockId({pos[1], pos[2]+i-1, pos[3]}, mask)) then goto continue end
+        if walk.getBlockId({pos[1], pos[2]+i-1, pos[3]}, mask) == 'minecraft:lava' then goto continue end
 
         do return {pos[1], pos[2]+i, pos[3]} end
         :: continue ::
@@ -124,14 +168,40 @@ walk.neighbors = function(current, max_jump, max_fall)
         for j = -1, 1 do
             if i == 0 and j == 0 then goto continue end -- No self
 
-            local pos = {current[1] + i, current[2], current[3] + j}
-            local block = walk.walkableBlock(pos, current, max_jump, max_fall)
+            local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
+            local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, current['mask'])
             if block ~= nil then
-                table.insert(neighbors, block)
+                local node = {
+                    ['pos'] = block,
+                    ['mask'] = current['mask'],
+                    ['mask_length'] = current['mask_length'],
+                }
+                table.insert(neighbors, node)
             end
             :: continue ::
         end
     end
+
+    -- place blocks
+    local mask = {}
+    for k, v in pairs(current['mask']) do mask[k] = v end
+    mask[Calc.pointToStr(current['pos'])] = 'minecraft:cobblestone'
+
+    local pos = {current['pos'][1], current['pos'][2]+1, current['pos'][3]}
+    local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
+    if block ~= nil then
+        local node = {
+            ['pos'] = block,
+            ['mask'] = mask,
+            ['mask_length'] = current['mask_length'] + 1,
+            ['place'] = {
+                ['pos'] = pos,
+                ['face'] = {current['pos'][1], current['pos'][2], current['pos'][3]},
+            }
+        }
+        table.insert(neighbors, node)
+    end
+
     return neighbors
 end
 
@@ -152,13 +222,13 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
     local list_open = {
         {
             ['pos'] = {start_pos[1], start_pos[2], start_pos[3]},
-            ['heuristic'] = walk.heuristic(start_pos, end_pos)
+            ['heuristic'] = walk.heuristic(start_pos, end_pos),
+            ['mask'] = {},
+            ['mask_length'] = 0,
         }
     }
     local list_closed = {}
     local list_open_ref = {}
-
-    local grid = {}
 
     while #list_open > 0 do
         if os.clock() - start > pathFinderTimeout then return nil end
@@ -166,10 +236,10 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
 
         if Calc.inBox(current['pos'], objective) then
             local path = {}
-            local cell = {current['pos'][1], current['pos'][2], current['pos'][3]}
-            while Calc.compareArray(cell, start_pos) == false do
+            local cell = current
+            while Calc.compareArray(cell['pos'], start_pos) == false do
                 table.insert(path, cell)
-                cell = grid[Calc.pointToStr(cell)]
+                cell = cell['parent']
             end
 
             local path_ = {}
@@ -179,19 +249,19 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
             return path_
         end
 
-        local neighbors_ = walk.neighbors(current['pos'], max_jump, max_fall)
+        local neighbors_ = walk.neighbors(current, max_jump, max_fall)
         for _, neighbor in pairs(neighbors_) do
-            if list_open_ref[Calc.pointToStr(neighbor)] == nil and
-                list_closed[Calc.pointToStr(neighbor)] == nil then
+            if list_open_ref[Calc.pointToStr(neighbor['pos'])] == nil and
+                list_closed[Calc.pointToStr(neighbor['pos'])] == nil then
 
-                local weight = walk.heuristic(neighbor, end_pos)
-                local node = {['pos'] = neighbor, ['heuristic'] = weight}
+                local weight = walk.heuristic(neighbor['pos'], end_pos) + (neighbor['mask_length'] *3)
+                neighbor['heuristic'] = weight
+                neighbor['parent'] = current
 
-                local index = Calc.binary_search(list_open, node, function(x) return x['heuristic'] end)
-                table.insert(list_open, index, node)
+                local index = Calc.binary_search(list_open, neighbor, function(x) return x['heuristic'] end)
+                table.insert(list_open, index, neighbor)
 
-                list_open_ref[Calc.pointToStr(neighbor)] = true
-                grid[Calc.pointToStr(neighbor)] = {current['pos'][1], current['pos'][2], current['pos'][3]}
+                list_open_ref[Calc.pointToStr(neighbor['pos'])] = true
             end
         end
 
@@ -200,9 +270,37 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
     log("Path not found")
 end
 
-walk.move = function(to)
+walk.move = function(node)
     local player = getPlayer()
     local time = os.clock()
+
+    local to = node['pos']
+
+    if node['place'] ~= nil then
+        log("Place block")
+        local face = node['place']['face']
+        local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
+
+        lookAt(face[1], face[2], face[3])
+        sleep(200)
+
+        if pos[1] - face[1] == 0 and pos[2] - face[2] == 0 and pos[3] - face[3] == 0 then
+            while true do
+                jump(1)
+                lookAt(face[1]+0.5, face[2], face[3]+0.5)
+
+                walk.fastPlace()
+
+                local block = getBlock(face[1], face[2], face[3])
+                if block ~= nil and block.id ~= 'minecraft:air' then break end
+                sleep(100)
+                if os.clock() - time > 3 then return false end
+            end
+
+        else
+            walk.fastPlace()
+        end
+    end
 
     while true do
         local now = os.clock()
