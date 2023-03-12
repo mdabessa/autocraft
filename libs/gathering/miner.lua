@@ -83,7 +83,7 @@ miner.minePlaceFinder = function(pos)
             if _block == nil then return false end
             if _block.id == 'minecraft:water' then return false end
             if _block.id == 'minecraft:air' then return false end
-            if World.walkableBlock({pos[1], pos[2]+1, pos[3]}, {_pos[1], _pos[2]+1, _pos[3]})
+            if Walk.walkableBlock({pos[1], pos[2]+1, pos[3]}, {_pos[1], _pos[2]+1, _pos[3]})
                 == false then return false end
         end
     end

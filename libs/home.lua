@@ -30,7 +30,7 @@ home.buildWorkbench = function()
     for dx = -1, 1 do
         for dy = -1, 0 do
             for dz = -1, 1 do
-                local _pos = World.walkableBlock({pos[1]+dx, pos[2]+dy, pos[3]+dz}, pos, 1, 1)
+                local _pos = Walk.walkableBlock({pos[1]+dx, pos[2]+dy, pos[3]+dz}, pos, 1, 1)
                 if _pos ~= nil and Calc.compareArray(_pos, pos) == false then
                     place = _pos
                     break
@@ -90,7 +90,7 @@ home.buildFurnace = function()
     for dx = -1, 1 do
         for dy = -1, 0 do
             for dz = -1, 1 do
-                local _pos = World.walkableBlock({pos[1]+dx, pos[2]+dy, pos[3]+dz}, pos, 1, 1)
+                local _pos = Walk.walkableBlock({pos[1]+dx, pos[2]+dy, pos[3]+dz}, pos, 1, 1)
                 if _pos ~= nil and Calc.compareArray(_pos, pos) == false then
                     place = _pos
                     break
@@ -137,7 +137,7 @@ home.homePlace = function (pos)
             local _pos = {pos[1]+i, pos[2], pos[3]+j}
             local _block = getBlock(_pos[1], _pos[2], _pos[3])
             if _block ~= nil and block.id == 'minecraft:water' then return false end
-            if block == nil or World.walkableBlock(pos, _pos) == false then return false end
+            if block == nil or Walk.walkableBlock(pos, _pos) == false then return false end
         end
     end
     for i = 1, 10 do -- 10 blocks above
