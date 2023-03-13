@@ -149,11 +149,11 @@ end
 crafting.furnaceCraft = function(recipe)
     Home.goHome()
 
-    local furnace = World.searchBlock('minecraft:furnace', 2)
+    local furnace = World.searchBlock('minecraft:furnace', 1) or World.searchBlock('minecraft:lit_furnace', 1)
 
     if furnace == nil then
         Home.buildFurnace()
-        furnace = World.searchBlock('minecraft:furnace', 2)
+        furnace = World.searchBlock('minecraft:furnace', 1) or World.searchBlock('minecraft:lit_furnace', 1)
 
         if furnace == nil then error('No furnace found') end
     end
