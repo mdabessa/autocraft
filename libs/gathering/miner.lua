@@ -57,7 +57,20 @@ miner.placeTorch = function ()
     end
 end
 
+miner.checkPickaxeLevel = function(block_id)
+    local slot = Inventory.getHotbarSlot('pickaxe')
+    local inv = openInventory()
+    local map = inv.mapping.inventory
+    local item = inv.getSlot(map['hotbar'][slot])
+    local level = miner.ORES_HARVEST_LEVEL[block_id] or 1
+
+    if not Inventory.isTool(item, 'pickaxe') then return false end
+    if Inventory.toolLevel(item.id) < level then return false end
+    return true
+end
+
 miner.assertPickaxeLevel = function(block)
+    if miner.checkPickaxeLevel(block) then return nil end
     Inventory.sortHotbar()
     local inv = openInventory()
     local map = inv.mapping.inventory
@@ -98,9 +111,6 @@ end
 miner.mineDown = function(direction)
     local player = getPlayer()
     local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
-    local inv = openInventory()
-    local map = inv.mapping.inventory
-    local slot = Inventory.getHotbarSlot('pickaxe')
     local light = getLight(pos[1], pos[2]+1, pos[3])
 
     if light < 4 then miner.placeTorch() end
@@ -111,8 +121,7 @@ miner.mineDown = function(direction)
             local layer = i
             if i == 3 then layer = -1 end
 
-            local item = inv.getSlot(map['hotbar'][slot])
-            if not Inventory.isTool(item, 'pickaxe') then return nil end
+            if miner.checkPickaxeLevel('minecraft:stone') == false then return nil end
 
             local _pos = {pos[1]+direction[1], pos[2] + layer, pos[3]+direction[2]}
             local block = getBlock(_pos[1], _pos[2], _pos[3])
@@ -132,9 +141,6 @@ end
 miner.mineForward = function(direction)
     local player = getPlayer()
     local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
-    local inv = openInventory()
-    local map = inv.mapping.inventory
-    local slot = Inventory.getHotbarSlot('pickaxe')
     local light = getLight(pos[1], pos[2]+1, pos[3])
     if light < 4 then miner.placeTorch() end
     while true do
@@ -142,8 +148,7 @@ miner.mineForward = function(direction)
         for i = 0, 1 do
             complete = complete + 1
 
-            local item = inv.getSlot(map['hotbar'][slot])
-            if not Inventory.isTool(item, 'pickaxe') then return nil end
+            if miner.checkPickaxeLevel('minecraft:stone') == false then return nil end
 
             local _pos = {pos[1]+direction[1], pos[2] + i, pos[3]+direction[2]}
             local block = getBlock(_pos[1], _pos[2], _pos[3])
@@ -163,7 +168,6 @@ end
 miner.mineOres = function (direction)
     local range = 5
     local pos = getPlayer().pos
-    local slot = Inventory.getHotbarSlot('pickaxe')
     pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
 
     while true do
@@ -182,12 +186,7 @@ miner.mineOres = function (direction)
                     local block = getBlock(_pos[1], _pos[2], _pos[3])
 
                     if block ~= nil and string.find(block.id, 'ore') then
-                        local inv = openInventory()
-                        local map = inv.mapping.inventory
-                        local item = inv.getSlot(map['hotbar'][slot])
-
-                        if not Inventory.isTool(item, 'pickaxe') then return nil end
-                        if Inventory.toolLevel(item.id) < miner.ORES_HARVEST_LEVEL[block.id] then return nil end
+                        if miner.checkPickaxeLevel(block.id) == false then goto continue end
                         if Action.blockIsVisible(_pos[1], _pos[2], _pos[3]) == false then goto continue end
 
                         local box = Calc.createBox(_pos, {2, 6, 2})
@@ -201,7 +200,7 @@ miner.mineOres = function (direction)
                 end
             end
         end
-        Action.pickupNearbyItems('item')
+        Action.pickupNearbyItems('item', 5, 0.1)
         if dug == false then break end
     end
 end
