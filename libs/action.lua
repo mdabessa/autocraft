@@ -137,9 +137,13 @@ action.blockIsVisible = function(x,y,z, resolution)
             posL[i] = posL[i] - s1
         end
 
+        local block = getBlock(posL[1], posL[2], posL[3])
+        if block == nil or block == false or block.id ~= 'minecraft:air' then
+            goto continue
+        end
+
         local d = {posL[1] - pos[1], posL[2] - pos[2], posL[3] - pos[3]}
         local step = math.max(math.abs(d[1]), math.abs(d[2]), math.abs(d[3])) * resolution
-
         while true do
             pos = {pos[1] + d[1] / step, pos[2] + d[2] / step, pos[3] + d[3] / step}
 
@@ -151,7 +155,7 @@ action.blockIsVisible = function(x,y,z, resolution)
             end
             if matches == 3 then break end
 
-            local block = getBlock(pos[1], pos[2], pos[3])
+            block = getBlock(pos[1], pos[2], pos[3])
             if block == nil or block == false or block.id ~= 'minecraft:air' then
                 goto continue
             end
