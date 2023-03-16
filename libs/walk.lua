@@ -209,7 +209,7 @@ walk.heuristic = function(point1, point2)
     return Calc.distance3d(point1, point2)
 end
 
-walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
+walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout, reverse)
     pathFinderTimeout = pathFinderTimeout or 10
     local start = os.clock()
 
@@ -217,12 +217,16 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
     local start_pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
     local end_pos = Calc.centerBox(objective)
 
-    if Calc.inBox(start_pos, objective) then return {} end
+    if Calc.inBox(start_pos, objective) and not reverse then return {} end
+    if not Calc.inBox(start_pos, objective) and reverse then return {} end
+
+    local h = walk.heuristic(start_pos, end_pos)
+    if reverse then h = -h end
 
     local list_open = {
         {
             ['pos'] = {start_pos[1], start_pos[2], start_pos[3]},
-            ['heuristic'] = walk.heuristic(start_pos, end_pos),
+            ['heuristic'] = h,
             ['mask'] = {},
             ['mask_length'] = 0,
         }
@@ -234,7 +238,8 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
         if os.clock() - start > pathFinderTimeout then return nil end
         local current = table.remove(list_open, 1)
 
-        if Calc.inBox(current['pos'], objective) then
+        if (Calc.inBox(current['pos'], objective) and not reverse) or
+            (not Calc.inBox(current['pos'], objective) and reverse) then
             local path = {}
             local cell = current
             while Calc.compareArray(cell['pos'], start_pos) == false do
@@ -254,7 +259,10 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout)
             if list_open_ref[Calc.pointToStr(neighbor['pos'])] == nil and
                 list_closed[Calc.pointToStr(neighbor['pos'])] == nil then
 
-                local weight = walk.heuristic(neighbor['pos'], end_pos) + (neighbor['mask_length'] *3)
+                local weight = walk.heuristic(neighbor['pos'], end_pos)
+                if reverse then weight = -weight end
+                weight = weight + (neighbor['mask_length'] *3)
+
                 neighbor['heuristic'] = weight
                 neighbor['parent'] = current
 
@@ -358,9 +366,10 @@ walk.followPath = function(path)
     return true
 end
 
-walk.walkTo = function(to, steps, pathFinderArgs)
+walk.walkTo = function(to, steps, pathFinderArgs, reverse)
     steps = steps or 50
     pathFinderArgs = pathFinderArgs or {1, 5, 10} -- max_jump, max_fall, pathFinderTimeout
+    reverse = reverse or false
 
     while true do
         local player = getPlayer()
@@ -370,9 +379,10 @@ walk.walkTo = function(to, steps, pathFinderArgs)
         center[2] = pos[2]
         local dist = Calc.distance3d(player.pos, center)
 
-        if Calc.inBox(pos, box) then return true end
+        if Calc.inBox(pos, box) and not reverse then return true end
+        if not Calc.inBox(pos, box) and reverse then return true end
 
-        if dist > steps then
+        if dist > steps and not reverse then
             local angle = Calc.direction(pos, center)
             local new_point = Calc.directionToPoint(pos, angle, steps)
             box = Calc.createBox(new_point, 10)
@@ -380,7 +390,7 @@ walk.walkTo = function(to, steps, pathFinderArgs)
             box[2][2] = 255
         end
 
-        local path = walk.pathFinder(box, pathFinderArgs[1], pathFinderArgs[2], pathFinderArgs[3])
+        local path = walk.pathFinder(box, pathFinderArgs[1], pathFinderArgs[2], pathFinderArgs[3], reverse)
         if path == nil then
             return false
         else

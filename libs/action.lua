@@ -113,57 +113,147 @@ action.lookAtBlock = function(x,y,z)
 
 end
 
-action.blockIsVisible = function(x,y,z, resolution)
-    resolution = resolution or 10 -- resolution is the number that multiplies the steps to check from the player to the block
+action.pointIsVisible = function (from, to, resolution)
+    resolution = resolution or 10 -- resolution is the number that multiplies the distance to check from the player to the block
+    local steps = Calc.distance3d(from, to) * resolution
 
-    local obj = {x, y, z}
-    local pos = {getPlayer().pos[1], getPlayer().pos[2]+1, getPlayer().pos[3]}
-    local delta = {obj[1] - pos[1], obj[2] - pos[2], obj[3] - pos[3]}
-
-    for i=1, 3 do
-        local posL = {}
+    for i = 1, steps do
+        local pos = {}
         for j = 1, 3 do
-            if obj[j] > 0 then
-                table.insert(posL, obj[j] +0.5)
-            else
-                table.insert(posL, obj[j] -0.5)
+            pos[j] = from[j] + ((to[j] - from[j]) * (i / steps))
+        end
+        for j = 1, 3 do
+            pos[j] = math.floor(pos[j])
+        end
+        local block = getBlock(pos[1], pos[2], pos[3])
+        if not block then return false end
+        if block.id ~= 'minecraft:air' then return false end
+    end
+    return true
+end
+
+action.blockFaces = function(pos)
+    local player_eyes = {getPlayer().pos[1], getPlayer().pos[2] + 1.62, getPlayer().pos[3]}
+    local faces = {}
+    for i=1, 3 do
+        for j=-1, 1, 2 do
+            local _pos = {pos[1], pos[2], pos[3]}
+            _pos[i] = _pos[i] + j
+            local block = getBlock(_pos[1], _pos[2], _pos[3])
+            if not block then goto continue end
+
+            local face = {pos[1], pos[2], pos[3]}
+
+            for k=1, 3 do
+                face[k] = face[k] + 0.5
             end
+
+            face[i] = face[i] + (0.5*j)
+
+            local is_player_side = false
+            local d = player_eyes[i] - face[i]
+            if d > 0 and j == 1 then is_player_side = true end
+            if d < 0 and j == -1 then is_player_side = true end
+
+            local is_visible = action.pointIsVisible(player_eyes, face)
+
+
+            local face_ = {
+                pos = face,
+                neighbor = _pos,
+                is_visible = is_visible,
+                is_player_side = is_player_side
+            }
+            table.insert(faces, face_)
+
+            :: continue ::
         end
+    end
+    return faces
+end
 
-        if delta[i] == 0 then
-            goto continue
-        else
-            local s1 = delta[i] / math.abs(delta[i])
-            posL[i] = posL[i] - s1
-        end
-
-        local block = getBlock(posL[1], posL[2], posL[3])
-        if block == nil or block == false or block.id ~= 'minecraft:air' then
-            goto continue
-        end
-
-        local d = {posL[1] - pos[1], posL[2] - pos[2], posL[3] - pos[3]}
-        local step = math.max(math.abs(d[1]), math.abs(d[2]), math.abs(d[3])) * resolution
-        while true do
-            pos = {pos[1] + d[1] / step, pos[2] + d[2] / step, pos[3] + d[3] / step}
-
-            local matches = 0
-            for j=1, 3 do
-                if math.floor(pos[j]) == math.floor(posL[j]) then
-                    matches = matches + 1
-                end
-            end
-            if matches == 3 then break end
-
-            block = getBlock(pos[1], pos[2], pos[3])
-            if block == nil or block == false or block.id ~= 'minecraft:air' then
-                goto continue
-            end
-        end
-        do return true end
-        :: continue ::
+action.blockIsVisible = function(x, y, z)
+    local pos = {x, y, z}
+    local faces = action.blockFaces(pos)
+    for i=1, #faces do
+        if faces[i].is_visible then
+            return true end
     end
     return false
+end
+
+action.placeBlock = function(block_id, pos)
+    local pos_ = getPlayer().pos
+
+    if pos == nil then
+        pos = {pos_[1], pos_[2], pos_[3]} -- temporary
+    else
+        if Calc.distance3d(pos_, pos) > 4 then return false end
+    end
+
+    -- walk away from block to have space to place it
+    local box = Calc.createBox(pos, 2)
+    if not Walk.walkTo(box, 50, {nil, nil, 1}, true) then return false end
+
+    local inv = openInventory()
+    local map = inv.mapping.inventory
+    local item = Inventory.findItem(block_id, map)
+
+    if next(item) == nil then return false end
+    local slot, _ = next(item)
+    local hotbar_slot = Inventory.getHotbarSlot('placeable')
+    if slot ~= map.hotbar[hotbar_slot] then
+        inv.swap(slot, map.hotbar[hotbar_slot])
+    end
+
+    setHotbar(hotbar_slot)
+    sleep(100)
+
+    action.breakFlower(pos) -- break flower if there is one
+
+    local faces = action.blockFaces(pos)
+    local face = nil
+    for i=1, #faces do
+        if faces[i].is_visible and not faces[i].is_player_side then
+            local neighbor = getBlock(faces[i].neighbor[1], faces[i].neighbor[2], faces[i].neighbor[3])
+            if not Walk.solidBlock(neighbor.id) then goto continue end
+            face = faces[i]
+            break
+        end
+        :: continue ::
+    end
+
+    if face == nil then return false end
+    lookAt(face.pos[1], face.pos[2], face.pos[3])
+    sleep(100)
+    use()
+    sleep(100)
+
+    local block = getBlock(pos[1], pos[2], pos[3])
+    if not block or block.id ~= block_id then return false end
+    return true
+end
+
+action.breakFlower = function (pos)
+    local block = getBlock(pos[1], pos[2], pos[3])
+    if block.id == 'minecraft:air' then return true end
+
+    local steps = 3
+    for i=1, steps do
+        for j = 1, steps do
+            for k = 1, steps do
+                local look = {pos[1] + (i/steps), pos[2] + (j/steps), pos[3] + (k/steps)}
+                lookAt(look[1], look[2], look[3])
+                sleep(100)
+                attack(100)
+                sleep(100)
+
+                block = getBlock(pos[1], pos[2], pos[3])
+                if block == nil or block == false then return false end
+                if block.id == 'minecraft:air' then return true end
+            end
+        end
+    end
 end
 
 return action
