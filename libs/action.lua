@@ -93,24 +93,23 @@ end
 
 action.lookAtBlock = function(x,y,z)
     local pos = {x, y, z}
-    lookAt(pos[1]+0.5, pos[2]+0.5, pos[3]+0.5)
-    sleep(100)
+    local block = getBlock(pos[1], pos[2], pos[3])
     local actual = getPlayer().lookingAt
+    local _block = getBlock(actual[1], actual[2], actual[3])
 
-    for i = 1, 3 do
-        for j = -1, 1, 2 do
-            local block = getBlock(pos[1], pos[2], pos[3])
-            local _block = getBlock(actual[1], actual[2], actual[3])
-            if block.id == _block.id then return end
+    local faces = action.blockFaces(pos)
+    for i = 1, #faces do
+        if block.id == _block.id then return true end
 
-            local _pos = {pos[1]+0.5, pos[2]+0.5, pos[3]+0.5}
-            _pos[i] = _pos[i] + (0.5*j)
-            lookAt(_pos[1], _pos[2], _pos[3])
-            sleep(100)
-            actual = getPlayer().lookingAt
-        end
+        local face = faces[i]
+        lookAt(face.pos[1], face.pos[2], face.pos[3])
+        sleep(100)
+
+        actual = getPlayer().lookingAt
+        _block = getBlock(actual[1], actual[2], actual[3])
     end
 
+    return false
 end
 
 action.pointIsVisible = function (from, to, resolution)
@@ -127,7 +126,7 @@ action.pointIsVisible = function (from, to, resolution)
         end
         local block = getBlock(pos[1], pos[2], pos[3])
         if not block then return false end
-        if block.id ~= 'minecraft:air' then return false end
+        if Walk.solidBlock(block.id) then return false end
     end
     return true
 end
@@ -193,7 +192,7 @@ action.placeBlock = function(block_id, pos)
 
     -- walk away from block to have space to place it
     local box = Calc.createBox(pos, 2)
-    if not Walk.walkTo(box, 50, {nil, nil, 1}, true) then return false end
+    if not Walk.walkTo(box, 50, {1, 1, 1}, true) then return false end
 
     local inv = openInventory()
     local map = inv.mapping.inventory
