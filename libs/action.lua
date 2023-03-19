@@ -208,7 +208,7 @@ action.placeBlock = function(block_id, pos)
     setHotbar(hotbar_slot)
     sleep(100)
 
-    action.breakFlower(pos) -- break flower if there is one
+    action.breakFlower(pos) -- break flower if there is one in the position to place the block
 
     local faces = action.blockFaces(pos)
     local face = nil
@@ -224,6 +224,8 @@ action.placeBlock = function(block_id, pos)
 
     if face == nil then return false end
     lookAt(face.pos[1], face.pos[2], face.pos[3])
+    sleep(100)
+    attack() -- break any flower that the player is inside, like tall grass
     sleep(100)
     use()
     sleep(100)
