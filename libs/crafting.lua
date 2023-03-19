@@ -289,15 +289,23 @@ end
 
 crafting.fastCraft = function (item_id)
     local recipes = crafting.getValidRecipe(item_id)
-    if recipes['crafting'] == 0 then return false end
+    if #recipes['crafting'] == 0 then return false end
 
     local recipe = recipes['crafting'][1]
     if not crafting.canCraftInHand(recipe) then return false end
 
-    local items = crafting.countRecipeItems(recipe)
-    for id, count in pairs(items) do
-        local itemsOnInventory = Inventory.countItems(id)
-        if itemsOnInventory < count then return false end
+    while true do
+        local items = crafting.countRecipeItems(recipe)
+        local complete = true
+        for id, count in pairs(items) do
+            local itemsOnInventory = Inventory.countItems(id)
+            if itemsOnInventory < count then
+                local result = crafting.fastCraft(id)
+                if not result then return false end
+                complete = false
+            end
+        end
+        if complete then break end
     end
 
     crafting.handCraft(recipe)
