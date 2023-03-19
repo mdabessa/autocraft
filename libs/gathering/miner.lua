@@ -166,7 +166,7 @@ miner.mineForward = function(direction)
 end
 
 miner.mineOres = function (direction)
-    local range = 5
+    local range = 3
     local pos = getPlayer().pos
     pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
 
@@ -186,8 +186,8 @@ miner.mineOres = function (direction)
                     local block = getBlock(_pos[1], _pos[2], _pos[3])
 
                     if block ~= nil and string.find(block.id, 'ore') then
-                        if miner.checkPickaxeLevel(block.id) == false then goto continue end
                         if Action.blockIsVisible(_pos[1], _pos[2], _pos[3]) == false then goto continue end
+                        if miner.checkPickaxeLevel(block.id) == false then goto continue end
 
                         local box = Calc.createBox(_pos, {2, 6, 2})
                         if Walk.walkTo(box, 50, {nil, nil, 0.1}) == false then goto continue end
@@ -210,7 +210,7 @@ miner.mine = function(objective, quantity)
     local count = Inventory.countItems(objective)
     local goal = count + quantity
     local place = miner.getMinePlace()
-    local box = Calc.createBox(place, {1,2,1})
+    local box = Calc.createBox(place, {1,1,1})
     if Walk.walkTo(box, 50, {nil, nil, 5}) == false then return false end
     local directions = {{1,0}, {0,1}, {-1,0}, {0,-1}}
     local possible_directions = {}
