@@ -175,6 +175,7 @@ walk.neighbors = function(current, max_jump, max_fall)
                     ['pos'] = block,
                     ['mask'] = current['mask'],
                     ['mask_length'] = current['mask_length'],
+                    ['max_place'] = current['max_place'],
                 }
                 table.insert(neighbors, node)
             end
@@ -183,23 +184,26 @@ walk.neighbors = function(current, max_jump, max_fall)
     end
 
     -- place blocks
-    local mask = {}
-    for k, v in pairs(current['mask']) do mask[k] = v end
-    mask[Calc.pointToStr(current['pos'])] = 'minecraft:cobblestone'
+    if current['max_place'] > 0 then
+        local mask = {}
+        for k, v in pairs(current['mask']) do mask[k] = v end
+        mask[Calc.pointToStr(current['pos'])] = 'minecraft:cobblestone'
 
-    local pos = {current['pos'][1], current['pos'][2]+1, current['pos'][3]}
-    local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
-    if block ~= nil then
-        local node = {
-            ['pos'] = block,
-            ['mask'] = mask,
-            ['mask_length'] = current['mask_length'] + 1,
-            ['place'] = {
-                ['pos'] = pos,
-                ['face'] = {current['pos'][1], current['pos'][2], current['pos'][3]},
+        local pos = {current['pos'][1], current['pos'][2]+1, current['pos'][3]}
+        local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
+        if block ~= nil then
+            local node = {
+                ['pos'] = block,
+                ['mask'] = mask,
+                ['mask_length'] = current['mask_length'] + 1,
+                ['place'] = {
+                    ['pos'] = pos,
+                    ['face'] = {current['pos'][1], current['pos'][2], current['pos'][3]},
+                },
+                ['max_place'] = current['max_place'] - 1,
             }
-        }
-        table.insert(neighbors, node)
+            table.insert(neighbors, node)
+        end
     end
 
     return neighbors
@@ -217,6 +221,11 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout, rev
     local start_pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
     local end_pos = Calc.centerBox(objective)
 
+    local max_place = 0
+    for key, value in pairs(walk.placeableBlocks) do
+        max_place = max_place + Inventory.countItems(key)
+    end
+
     if Calc.inBox(start_pos, objective) and not reverse then return {} end
     if not Calc.inBox(start_pos, objective) and reverse then return {} end
 
@@ -229,6 +238,8 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout, rev
             ['heuristic'] = h,
             ['mask'] = {},
             ['mask_length'] = 0,
+            ['max_place'] = max_place,
+            ['parent'] = nil
         }
     }
     local list_closed = {}
@@ -285,7 +296,6 @@ walk.move = function(node)
     local to = node['pos']
 
     if node['place'] ~= nil then
-        log("Place block")
         local face = node['place']['face']
         local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
 
