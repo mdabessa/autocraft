@@ -9,7 +9,12 @@ for i = 2, #chat do
     content = content .. chat[i] .. ' '
 end
 
-local s = Command.execute(content)
+local s = false
+if content:sub(1, 1) == '.' then
+    content = content:sub(2, -1)
+    s = Command.execute(content)
+end
+
 
 if s == false then
     return args[4]
