@@ -1,5 +1,7 @@
 local command = {}
 
+command.threads = {}
+
 command.execute = function(str)
     local content = Str.split(str, ' ')
     local cmd = content[1]
@@ -19,6 +21,8 @@ command.execute = function(str)
         end)
 
         cmd_thread:start()
+
+        table.insert(command.threads, cmd_thread)
         return true
     end
 
@@ -26,6 +30,20 @@ command.execute = function(str)
 end
 
 command.commands = {}
+
+command.commands.help = function (args)
+    log('Available commands:')
+    for k, v in pairs(command.commands) do
+        log(k)
+    end
+end
+
+command.commands.stop = function (args)
+    log('Stopping...')
+    for i = 1, #command.threads do
+        command.threads[i]:stop()
+    end
+end
 
 command.commands.follow = function (args)
     args = Str.split(args, ' ')
