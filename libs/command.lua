@@ -13,7 +13,12 @@ command.execute = function(str)
     end
 
     if command.commands[cmd] ~= nil then
-        command.commands[cmd](args)
+
+        local cmd_thread = thread.new( function ()
+            pcall(command.commands[cmd], args)
+        end)
+
+        cmd_thread:start()
         return true
     end
 
@@ -56,6 +61,10 @@ command.commands.follow = function (args)
 
 
     Walk.followEntity(entity_id, min_dist)
+end
+
+command.commands.say = function (args)
+    say(args)
 end
 
 return command
