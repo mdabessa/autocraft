@@ -2,3 +2,4 @@
 
 # VS Code
 .vscode
+*.sqlite3
