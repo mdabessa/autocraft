@@ -1,19 +1,4 @@
--- local path =  ...
--- local sql_driverManager = luajava.bindClass("java.sql.DriverManager")
--- local sql_connection = sql_driverManager:getConnection("jdbc:sqlite:" .. path);
--- local sql_statement = sql_connection:createStatement();
-
--- sql_statement:executeUpdate("drop table if exists person");
--- sql_statement:executeUpdate("create table person (id integer, name string)");
--- sql_statement:executeUpdate("insert into person values(1, 'leo')");
--- sql_statement:executeUpdate("insert into person values(2, 'yui')");
--- local rs = sql_statement:executeQuery("select * from person")
--- while rs:next() do
---     local id, name = rs:getInt("id"), rs:getString("name")
---     log({id,name})
--- end
-local path =  string.gsub(debug.getinfo(1).source,"\\libs\\db.lua","\\db.sqlite3")
-path = string.gsub(path,"@","")
+local path = os.getenv("APPDATA") .. "\\.minecraft\\db.sqlite3"
 
 local db = {
     driver = luajava.bindClass("java.sql.DriverManager"),
