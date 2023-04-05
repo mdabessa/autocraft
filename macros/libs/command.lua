@@ -56,7 +56,7 @@ command.commands.follow = function (args)
     local entities = getEntityList()
     local entity = nil
     for i = 1, #entities do
-        if entities[i].name == entity_name then
+        if string.lower(entities[i].name) == string.lower(entity_name) then
             entity = entities[i]
             break
         end
@@ -83,6 +83,20 @@ end
 
 command.commands.say = function (args)
     say(args)
+end
+
+command.commands.craft = function (args)
+    local item = args
+    if item == nil then
+        log('Please specify an item')
+        return
+    end
+
+    if string.sub(item, 1, 10) ~= 'minecraft:' then
+        log('A minecraft id must be specified')
+    end
+
+    Crafting.craft(item, 1)
 end
 
 return command
