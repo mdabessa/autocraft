@@ -3,3 +3,4 @@
 # VS Code
 .vscode
 *.sqlite3
+settings.txt
