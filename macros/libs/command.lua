@@ -2,9 +2,13 @@ local command = {}
 
 command.threads = {}
 
+command.alias = {
+    ["goto"] = "goTo",
+}
+
 command.execute = function(str)
     local content = Str.split(str, ' ')
-    local cmd = content[1]
+    local cmd = string.lower(content[1])
     local args = ''
 
     if #content > 1 then
@@ -12,6 +16,10 @@ command.execute = function(str)
             args = args .. content[i] .. ' '
         end
         args = args:sub(1, -2)
+    end
+
+    if command.alias[cmd] ~= nil then
+        cmd = command.alias[cmd]
     end
 
     if command.commands[cmd] ~= nil then
