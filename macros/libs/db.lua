@@ -30,16 +30,17 @@ db.update = function(sql)
     sql_connection:close()
 end
 
-db.pop_command = function()
+db.add_event = function(event)
+    db.update("insert into events (event, created_at) values ('" .. event .. "', datetime('now'))")
+end
+
+db.get_command = function()
     local result = db.query("select * from commands order by priority asc, created_at asc limit 1")
-    if #result > 0 then
-        db.update("delete from commands where id = " .. result[1].id)
-    end
     return result
 end
 
-db.add_event = function(event)
-    db.update("insert into events (event, created_at) values ('" .. event .. "', datetime('now'))")
+db.delete_command = function(id)
+    db.update("delete from commands where id = " .. id)
 end
 
 return db
