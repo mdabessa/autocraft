@@ -122,4 +122,31 @@ command.commands.craft = function (args)
     Crafting.craft(item, 1)
 end
 
+command.commands.drop = function (args)
+    local item = args
+    if item == nil then
+        log('Please specify an item')
+        return
+    end
+
+    if string.sub(item, 1, 10) ~= 'minecraft:' then
+        log('A minecraft id must be specified')
+        return
+    end
+
+    item = Inventory.findItem(item)
+    if next(item) == nil then
+        log('Item not found')
+        return
+    end
+    local slot, _ = next(item)
+    local hotslot = Inventory.getHotbarSlot('placeable')
+    local inventory = openInventory()
+    local map = inventory.mapping.inventory
+    inventory.swap(slot, map['hotbar'][hotslot])
+    setHotbar(hotslot)
+    sleep(100)
+    drop(true)
+end
+
 return command
