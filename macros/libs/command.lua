@@ -6,8 +6,17 @@ command.alias = {
     ["goto"] = "goTo",
 }
 
+command.thread_cleanup = function()
+    for i = 1, #command.threads do
+        if command.threads[i].getStatus() == 'done' then
+            table.remove(command.threads, i)
+        end
+    end
+end
+
 command.execute = function(str)
     local content = Str.split(str, ' ')
+    if #content == 0 then return false end
     local cmd = string.lower(content[1])
     local args = ''
 
@@ -16,6 +25,14 @@ command.execute = function(str)
             args = args .. content[i] .. ' '
         end
         args = args:sub(1, -2)
+    end
+
+    if cmd == 'stop' then
+        for i = 1, #command.threads do
+            command.threads[i]:stop()
+        end
+        command.threads = {}
+        return true
     end
 
     if command.alias[cmd] ~= nil then
@@ -44,13 +61,7 @@ command.commands.help = function (args)
     for k, v in pairs(command.commands) do
         log(k)
     end
-end
-
-command.commands.stop = function (args)
-    log('Stopping...')
-    for i = 1, #command.threads do
-        command.threads[i]:stop()
-    end
+    log('stop')
 end
 
 command.commands.follow = function (args)
