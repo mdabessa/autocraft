@@ -427,8 +427,9 @@ walk.walkAway = function (distance, angle)
     return walk.walkTo(box)
 end
 
-walk.followEntity = function(entity_id, min_dist, pathFinderArgs)
+walk.followEntity = function(entity_id, min_dist, continue, pathFinderArgs)
     min_dist = min_dist or 5
+    continue = continue or false
     pathFinderArgs = pathFinderArgs or {1, 5, 10} -- max_jump, max_fall, pathFinderTimeout
 
     while true do
@@ -438,9 +439,14 @@ walk.followEntity = function(entity_id, min_dist, pathFinderArgs)
         if entity == nil then return true end
         local entity_pos = {math.floor(entity.pos[1]), math.floor(entity.pos[2]), math.floor(entity.pos[3])}
         local dist = Calc.distance3d(pos, entity_pos)
-        if dist < min_dist then goto continue end
-
-        local box = Calc.createBox(entity_pos, min_dist/2)
+        if dist < min_dist then
+            if continue then
+                goto continue
+            else
+                return true
+            end
+        end
+        local box = Calc.createBox(entity_pos, min_dist)
         walk.walkTo(box, 50, pathFinderArgs)
         :: continue ::
     end

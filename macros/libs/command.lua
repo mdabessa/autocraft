@@ -68,17 +68,40 @@ command.commands.follow = function (args)
     end
 
     local entity_id = entity.id
-    local min_dist = 2
 
-    if args[2] ~= nil then
-        local num = tonumber(args[2])
-        if num ~= nil then
-            min_dist = num
+    Walk.followEntity(entity_id, 2, true)
+end
+
+command.commands.goTo = function (args)
+    args = Str.split(args, ' ')
+    local entity_name = args[1]
+    if entity_name == nil then
+        log('Please specify a enity name')
+        return
+    end
+
+    local entities = getEntityList()
+    local entity = nil
+    for i = 1, #entities do
+        if string.lower(entities[i].name) == string.lower(entity_name) then
+            entity = entities[i]
+            break
         end
     end
 
+    if entity == nil then
+        log('Entity not found')
+        return
+    end
 
-    Walk.followEntity(entity_id, min_dist)
+    local entity_id = entity.id
+
+    Walk.followEntity(entity_id, 2, false)
+
+    entity = getEntity(entity_id)
+    lookAt(entity.pos[1], entity.pos[2]+entity.width-0.2, entity.pos[3])
+
+
 end
 
 command.commands.say = function (args)
