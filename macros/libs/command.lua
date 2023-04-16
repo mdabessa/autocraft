@@ -168,4 +168,62 @@ command.commands.drop = function (args)
     drop(true)
 end
 
+command.commands.give = function (args)
+    local item_name = nil
+    local entity_name = nil
+
+    args = Str.split(args, ' ')
+    if #args ~= 2 then
+        log('Please specify an item and an entity')
+        return
+    end
+
+    entity_name = args[1]
+    item_name = args[2]
+
+    if string.sub(item_name, 1, 10) ~= 'minecraft:' then
+        log('A minecraft id must be specified')
+        return
+    end
+
+    local entities = getEntityList()
+    local entity = nil
+    for i = 1, #entities do
+        if string.lower(entities[i].name) == string.lower(entity_name) then
+            entity = entities[i]
+            break
+        end
+    end
+
+    if entity == nil then
+        log('Entity not found')
+        return
+    end
+
+    local entity_id = entity.id
+    local item = Inventory.findItem(item_name)
+    if next(item) == nil then
+        Crafting.craft(item_name, 1)
+        item = Inventory.findItem(item_name)
+        if next(item) == nil then
+            log('Could not craft item')
+            return
+        end
+    end
+
+    Walk.followEntity(entity_id, 2, false)
+    entity = getEntity(entity_id)
+    lookAt(entity.pos[1], entity.pos[2]+entity.width, entity.pos[3])
+    sleep(300)
+
+    local slot, _ = next(item)
+    local hotslot = Inventory.getHotbarSlot('placeable')
+    local inventory = openInventory()
+    local map = inventory.mapping.inventory
+    inventory.swap(slot, map['hotbar'][hotslot])
+    setHotbar(hotslot)
+    sleep(100)
+    drop(true)
+end
+
 return command
