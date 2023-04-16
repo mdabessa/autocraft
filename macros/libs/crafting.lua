@@ -214,7 +214,7 @@ crafting.craft = function(item_id, quantity)
     local recipes = crafting.getValidRecipe(item_id)
     if #recipes['crafting'] > 0 then
         local _recipe = recipes['crafting'][1]
-        log('crafting: ' .. item_id)
+        Logger.log('crafting: ' .. item_id)
         local items = crafting.listItems(_recipe)
         while true do
             local hasAllItems = true
@@ -233,16 +233,16 @@ crafting.craft = function(item_id, quantity)
         local itemsOnInventory = Inventory.countItems(item_id)
         local goal = quantity + itemsOnInventory
         if crafting.canCraftInHand(_recipe) then
-            log('crafting in hand: ' .. item_id)
+            Logger.log('crafting in hand: ' .. item_id)
             crafting.handCraft(_recipe)
         else
-            log('crafting in table: ' .. item_id)
+            Logger.log('crafting in table: ' .. item_id)
             crafting.craftingTable(_recipe)
         end
 
         itemsOnInventory = Inventory.countItems(item_id)
-        log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
-        log('Created ' .. item_id)
+        Logger.log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
+        Logger.log('Created ' .. item_id)
         if itemsOnInventory < goal then
             crafting.craft(item_id, goal - itemsOnInventory)
         end
@@ -273,12 +273,12 @@ crafting.craft = function(item_id, quantity)
             crafting.craft('minecraft:planks', 1)
         end
 
-        log('crafting in furnace: ' .. item_id)
+        Logger.log('crafting in furnace: ' .. item_id)
         crafting.furnaceCraft(_recipe)
 
         itemsOnInventory = Inventory.countItems(item_id)
-        log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
-        log('Created ' .. item_id)
+        Logger.log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
+        Logger.log('Created ' .. item_id)
         if itemsOnInventory < goal then
             crafting.craft(item_id, goal - itemsOnInventory)
         end

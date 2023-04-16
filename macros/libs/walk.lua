@@ -286,7 +286,7 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout, rev
 
         list_closed[Calc.pointToStr(current['pos'])] = true
     end
-    log("Path not found")
+    Logger.log("Path not found")
 end
 
 walk.move = function(node)

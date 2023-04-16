@@ -104,7 +104,7 @@ home.createHome = function()
 end
 
 home.goHome = function()
-    log('Going home')
+    Logger.log('Going home')
     local homePos = home.getHome()
     local homeBox = Calc.createBox(homePos, 2)
     Walk.walkTo(homeBox, 50)

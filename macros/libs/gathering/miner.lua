@@ -249,7 +249,7 @@ miner.mine = function(objective, quantity)
 
         miner.mineOres(direction)
         count = Inventory.countItems(objective)
-        log('Mining ' .. objective .. ' ' .. count .. '/' .. goal)
+        Logger.log('Mining ' .. objective .. ' ' .. count .. '/' .. goal)
         ::continue::
     end
 end

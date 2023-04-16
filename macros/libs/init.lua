@@ -38,6 +38,7 @@ end
 Calc = include('utils/calc')
 Str = include('utils/str')
 Table = include('utils/table')
+Logger = include('utils/logger')
 Inventory = include('inventory')
 World = include('world')
 Action = include('action')
