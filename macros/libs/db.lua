@@ -1,12 +1,15 @@
-local path = os.getenv("APPDATA") .. "\\.minecraft\\db.sqlite3"
+local database = os.getenv('PG_DATABASE') or 'postgres'
+local user = os.getenv('PG_USER') or 'postgres'
+local password = os.getenv('PG_PASSWORD') or 'postgres'
 
 local db = {
-    driver = luajava.bindClass("java.sql.DriverManager"),
-    path = path
+    DriverManager = luajava.bindClass("java.sql.DriverManager"),
+    url = "jdbc:postgresql://localhost:5432/" .. database .. "?user=" .. user .. "&password=" .. password,
+    conn = nil
 }
 
 db.query = function(sql)
-    local sql_connection = db.driver:getConnection("jdbc:sqlite:" .. db.path);
+    local sql_connection = db.DriverManager:getConnection(db.url);
     local sql_statement = sql_connection:createStatement();
     local rs = sql_statement:executeQuery(sql)
     local result = {}
@@ -24,14 +27,14 @@ db.query = function(sql)
 end
 
 db.update = function(sql)
-    local sql_connection = db.driver:getConnection("jdbc:sqlite:" .. db.path);
+    local sql_connection = db.DriverManager:getConnection(db.url);
     local sql_statement = sql_connection:createStatement();
     sql_statement:executeUpdate(sql)
     sql_connection:close()
 end
 
 db.add_event = function(event)
-    db.update("insert into events (event, created_at) values ('" .. event .. "', datetime('now'))")
+    db.update("insert into events (event, created_at) values ('" .. event .. "', now())")
 end
 
 db.get_command = function()
