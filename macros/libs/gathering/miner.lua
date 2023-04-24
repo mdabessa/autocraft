@@ -9,6 +9,7 @@ miner.ORES_HARVEST_LEVEL = {
     ["minecraft:redstone_ore"] = 3,
     ["minecraft:emerald_ore"] = 3,
     ["minecraft:diamond_ore"] = 3,
+    ["minecraft:diamond"] = 3,
     ["minecraft:lapis_ore"] = 3,
     ["minecraft:nether_quartz_ore"] = 3,
     ["minecraft:obsidian"] = 4
