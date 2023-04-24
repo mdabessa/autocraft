@@ -1,13 +1,22 @@
 Libs = require('libs/init')
 
-Logger.log('Start!')
-
 Home.resetHome()
 if Home.getHome() == nil then
     Home.createHome()
 end
 
-Crafting.craft('minecraft:iron_sword', 1)
-Inventory.sortHotbar()
+local counter = 0
+while true do
+    if #Command.threads==0 then
+        counter = counter + 1
+        if counter == 5 then
+            counter = 0
+            log('Crafting diamond')
+            Command.execute('craft minecraft:diamond')
+        end
+    else
+        counter = 0
+    end
 
-Logger.log('Done!')
+    sleep(1000)
+end
