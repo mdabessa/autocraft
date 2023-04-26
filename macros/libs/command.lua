@@ -14,7 +14,7 @@ command.thread_cleanup = function()
     end
 end
 
-command.execute = function(str)
+command.execute = function(str, callback)
     local content = Str.split(str, ' ')
     if #content == 0 then return false end
     local cmd = string.lower(content[1])
@@ -42,7 +42,10 @@ command.execute = function(str)
     if command.commands[cmd] ~= nil then
 
         local cmd_thread = thread.new( function ()
-            pcall(command.commands[cmd], args)
+            local status, err = pcall(command.commands[cmd], args)
+            if callback ~= nil then
+                callback(status, err)
+            end
         end)
 
         cmd_thread:start()

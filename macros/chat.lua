@@ -2,6 +2,12 @@ Libs = require('libs/init')
 local args = {...}
 
 
+local callback = function(status, err)
+    if status == false then
+        log(err)
+    end
+end
+
 local chat = Str.split(args[4], " ")
 
 local content = ''
@@ -12,7 +18,7 @@ end
 local s = false
 if content:sub(1, 1) == '.' then
     content = content:sub(2, -1)
-    s = Command.execute(content)
+    s = Command.execute(content, callback)
 end
 
 
