@@ -226,7 +226,7 @@ miner.mine = function(objective, quantity)
         miner.assertPickaxeLevel(objective)
         box = Calc.createBox(place, {1,2,1})
         if Walk.walkTo(box, 50, {1, 1, 1}) == false then
-            if #possible_directions == 0 then return false end
+            if #possible_directions == 0 then error('Miner: No possible directions') end
             direction = table.remove(possible_directions, math.random(1, #possible_directions))
         else
             for i = 1, #directions do table.insert(possible_directions, directions[i]) end
