@@ -14,6 +14,11 @@ command.thread_cleanup = function()
     end
 end
 
+command.reset_player = function ()
+    local inv = openInventory()
+    inv.close()
+end
+
 command.execute = function(str, callback)
     local content = Str.split(str, ' ')
     if #content == 0 then return false end
@@ -40,7 +45,7 @@ command.execute = function(str, callback)
     end
 
     if command.commands[cmd] ~= nil then
-
+        command.reset_player()
         local cmd_thread = thread.new( function ()
             local status, err = pcall(command.commands[cmd], args)
             if callback ~= nil then
