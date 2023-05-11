@@ -206,6 +206,32 @@ walk.neighbors = function(current, max_jump, max_fall)
         end
     end
 
+    --break blocks
+    for i = -1, 1 do
+        for j = -1, 1 do
+            local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
+            local pos1 = {current['pos'][1] + i, current['pos'][2]+1, current['pos'][3] + j}
+            local mask = {}
+            for key, value in pairs(current['mask']) do mask[key] = value end
+            mask[Calc.pointToStr(pos)] = 'minecraft:air'
+            mask[Calc.pointToStr(pos1)] = 'minecraft:air'
+            local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
+            if block ~= nil then
+                local node = {
+                    ['pos'] = block,
+                    ['mask'] = mask,
+                    ['mask_length'] = current['mask_length'] + 2,
+                    ['max_place'] = current['max_place'],
+                    ['break'] = {
+                        pos,
+                        pos1
+                    }
+                }
+                table.insert(neighbors, node)
+            end
+        end
+    end
+
     return neighbors
 end
 
@@ -317,6 +343,22 @@ walk.move = function(node)
 
         else
             walk.fastPlace()
+        end
+    end
+
+    if node['break'] ~= nil then
+        local blocks = node['break']
+        for i = 1, #blocks do
+            local pos = blocks[i]
+            local block = getBlock(pos[1], pos[2], pos[3])
+            while true do
+                lookAt(pos[1]+0.5, pos[2]+0.5, pos[3]+0.5)
+                Action.dig()
+                sleep(100)
+
+                if block.id == 'minecraft:air' then break end
+                if os.clock() - time > 3 then return false end
+            end
         end
     end
 
