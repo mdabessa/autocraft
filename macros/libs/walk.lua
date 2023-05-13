@@ -209,6 +209,7 @@ walk.neighbors = function(current, max_jump, max_fall)
     --break blocks
     for i = -1, 1 do
         for j = -1, 1 do
+            if (math.abs(i) + math.abs(j) == 2) or (i==0 and j==0) then goto continue end
             local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
             local pos1 = {current['pos'][1] + i, current['pos'][2]+1, current['pos'][3] + j}
             local mask = {}
@@ -229,9 +230,40 @@ walk.neighbors = function(current, max_jump, max_fall)
                 }
                 table.insert(neighbors, node)
             end
+            ::continue::
         end
     end
 
+    for i = -1, 1 do
+        for j = -1, 1 do
+            if (math.abs(i) + math.abs(j) == 2) or (i==0 and j==0) then goto continue end
+            local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
+            local pos1 = {current['pos'][1] + i, current['pos'][2]+1, current['pos'][3] + j}
+            local pos2 = {current['pos'][1] + i, current['pos'][2]-1, current['pos'][3] + j}
+            local mask = {}
+            for key, value in pairs(current['mask']) do mask[key] = value end
+            mask[Calc.pointToStr(pos)] = 'minecraft:air'
+            mask[Calc.pointToStr(pos1)] = 'minecraft:air'
+            mask[Calc.pointToStr(pos2)] = 'minecraft:air'
+
+            local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
+            if block ~= nil then
+                local node = {
+                    ['pos'] = block,
+                    ['mask'] = mask,
+                    ['mask_length'] = current['mask_length'] + 3,
+                    ['max_place'] = current['max_place'],
+                    ['break'] = {
+                        pos,
+                        pos1,
+                        pos2
+                    }
+                }
+                table.insert(neighbors, node)
+            end
+            ::continue::
+        end
+    end
     return neighbors
 end
 
@@ -298,7 +330,7 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout, rev
 
                 local weight = walk.heuristic(neighbor['pos'], end_pos)
                 if reverse then weight = -weight end
-                weight = weight + (neighbor['mask_length'] *3)
+                weight = weight + neighbor['mask_length']
 
                 neighbor['heuristic'] = weight
                 neighbor['parent'] = current
@@ -350,13 +382,14 @@ walk.move = function(node)
         local blocks = node['break']
         for i = 1, #blocks do
             local pos = blocks[i]
-            local block = getBlock(pos[1], pos[2], pos[3])
             while true do
+                local block = getBlock(pos[1], pos[2], pos[3])
+                if block.id == 'minecraft:air' then break end
+                log('breaking ' .. block.id .. ' at ' .. pos[1]+0.5 .. ' ' .. pos[2]+0.5 .. ' ' .. pos[3]+0.5)
                 lookAt(pos[1]+0.5, pos[2]+0.5, pos[3]+0.5)
                 Action.dig()
                 sleep(100)
 
-                if block.id == 'minecraft:air' then break end
                 if os.clock() - time > 3 then return false end
             end
         end
