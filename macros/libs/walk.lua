@@ -271,8 +271,14 @@ walk.heuristic = function(point1, point2)
     return Calc.distance3d(point1, point2)
 end
 
-walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout, reverse)
-    pathFinderTimeout = pathFinderTimeout or 10
+walk.pathFinder = function(objective, pathFinderConfig)
+    pathFinderConfig = pathFinderConfig or {}
+    local maxJump = pathFinderConfig.maxJump or 1
+    local maxFall = pathFinderConfig.maxFall or 5
+    local pathFinderTimeout = pathFinderConfig.pathFinderTimeout or 10
+    local reverse = pathFinderConfig.reverse or false
+
+
     local start = os.clock()
 
     local pos = getPlayer().pos
@@ -323,7 +329,7 @@ walk.pathFinder = function(objective, max_jump, max_fall, pathFinderTimeout, rev
             return path_
         end
 
-        local neighbors_ = walk.neighbors(current, max_jump, max_fall)
+        local neighbors_ = walk.neighbors(current, maxJump, maxFall)
         for _, neighbor in pairs(neighbors_) do
             if list_open_ref[Calc.pointToStr(neighbor['pos'])] == nil and
                 list_closed[Calc.pointToStr(neighbor['pos'])] == nil then
@@ -451,10 +457,9 @@ walk.followPath = function(path)
     return true
 end
 
-walk.walkTo = function(to, steps, pathFinderArgs, reverse)
+walk.walkTo = function(to, steps, pathFinderConfig)
     steps = steps or 50
-    pathFinderArgs = pathFinderArgs or {1, 5, 10} -- max_jump, max_fall, pathFinderTimeout
-    reverse = reverse or false
+    local reverse = pathFinderConfig.reverse or false
 
     while true do
         local player = getPlayer()
@@ -475,7 +480,7 @@ walk.walkTo = function(to, steps, pathFinderArgs, reverse)
             box[2][2] = 255
         end
 
-        local path = walk.pathFinder(box, pathFinderArgs[1], pathFinderArgs[2], pathFinderArgs[3], reverse)
+        local path = walk.pathFinder(box, pathFinderConfig)
         if path == nil then
             return false
         else
