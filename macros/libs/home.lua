@@ -7,6 +7,9 @@ home.resetHome = function()
 end
 
 home.getHome = function()
+    if home.HOME == nil then
+        home.createHome()
+    end
     return home.HOME
 end
 
@@ -15,6 +18,21 @@ home.setHome = function(x, y, z)
 end
 
 home.buildWorkbench = function()
+    home.goHome()
+
+    local place = World.searchStructure(
+        function(pos)
+            local block = getBlock(pos[1], pos[2], pos[3])
+            if Walk.solidBlock(block.id) == true then return false end
+            local _block = getBlock(pos[1], pos[2]-1, pos[3])
+            if Walk.solidBlock(_block.id) == false then return false end
+            return true
+        end,
+        5
+    )
+
+    if place == nil then error('No place to build workbench') end
+
     local inv = openInventory()
     local map = inv.mapping.inventory
     local item = Inventory.findItem('minecraft:crafting_table', map)
@@ -25,6 +43,16 @@ home.buildWorkbench = function()
         if next(item) == nil then return false end
     end
 
+    local box = Calc.createBox(place, 1)
+    Walk.walkTo(box, 50)
+    Walk.walkTo(box, 50, {['reverse'] = true}) -- give some space to place
+
+    return Action.placeBlock('minecraft:crafting_table', place)
+end
+
+home.buildFurnace = function()
+    home.goHome()
+
     local place = World.searchStructure(
         function(pos)
             local block = getBlock(pos[1], pos[2], pos[3])
@@ -36,16 +64,8 @@ home.buildWorkbench = function()
         5
     )
 
-    if place == nil then return false end
+    if place == nil then error('No place to build furnace') end
 
-    local box = Calc.createBox(place, 1.2)
-    local s = Walk.walkTo(box, 50)
-    if s == false then return false end
-
-    return Action.placeBlock('minecraft:crafting_table', place)
-end
-
-home.buildFurnace = function()
     local inv = openInventory()
     local map = inv.mapping.inventory
     local item = Inventory.findItem('minecraft:furnace', map)
@@ -56,22 +76,9 @@ home.buildFurnace = function()
         if next(item) == nil then return false end
     end
 
-    local place = World.searchStructure(
-        function(pos)
-            local block = getBlock(pos[1], pos[2], pos[3])
-            if Walk.solidBlock(block.id) == true then return false end
-            local _block = getBlock(pos[1], pos[2]-1, pos[3])
-            if Walk.solidBlock(_block.id) == false then return false end
-            return true
-        end,
-        5
-    )
-
-    if place == nil then return false end
-
-    local box = Calc.createBox(place, 1.2)
-    local s = Walk.walkTo(box, 50)
-    if s == false then return false end
+    local box = Calc.createBox(place, 1)
+    Walk.walkTo(box, 50)
+    Walk.walkTo(box, 50, {['reverse'] = true}) -- give some space to place
 
     return Action.placeBlock('minecraft:furnace', place)
 end
