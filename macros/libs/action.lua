@@ -224,6 +224,7 @@ action.placeBlock = function(block_id, pos)
 
     if face == nil then return false end
     lookAt(face.pos[1], face.pos[2], face.pos[3])
+    sneak(300)
     sleep(100)
     attack() -- break any flower that the player is inside, like tall grass
     sleep(100)
