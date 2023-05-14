@@ -277,7 +277,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
     local maxFall = pathFinderConfig.maxFall or 5
     local pathFinderTimeout = pathFinderConfig.pathFinderTimeout or 10
     local reverse = pathFinderConfig.reverse or false
-
+    local weightMask = pathFinderConfig.weightMask or 1
 
     local start = os.clock()
 
@@ -336,7 +336,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
 
                 local weight = walk.heuristic(neighbor['pos'], end_pos)
                 if reverse then weight = -weight end
-                weight = weight + neighbor['mask_length']
+                weight = weight + (neighbor['mask_length'] * weightMask)
 
                 neighbor['heuristic'] = weight
                 neighbor['parent'] = current
@@ -376,7 +376,10 @@ walk.move = function(node)
                 local block = getBlock(face[1], face[2], face[3])
                 if block ~= nil and block.id ~= 'minecraft:air' then break end
                 sleep(100)
-                if os.clock() - time > 3 then return false end
+                if os.clock() - time > 3 then
+                    Logger.log("Player taking too long to place blocks")
+                    return false
+                end
             end
 
         else
@@ -391,19 +394,23 @@ walk.move = function(node)
             while true do
                 local block = getBlock(pos[1], pos[2], pos[3])
                 if block.id == 'minecraft:air' then break end
-                log('breaking ' .. block.id .. ' at ' .. pos[1]+0.5 .. ' ' .. pos[2]+0.5 .. ' ' .. pos[3]+0.5)
                 lookAt(pos[1]+0.5, pos[2]+0.5, pos[3]+0.5)
                 Action.dig()
                 sleep(100)
 
-                if os.clock() - time > 3 then return false end
+                if os.clock() - time > (3*#blocks) then
+                    Logger.log("Player taking too long to break blocks")
+                    return false
+                end
             end
         end
     end
 
+    time = os.clock()
     while true do
         local now = os.clock()
         if now - time > 3 then -- player stuck
+            Logger.log("Player stuck")
             return false
         end
 
@@ -482,13 +489,18 @@ walk.walkTo = function(to, steps, pathFinderConfig)
 
         local path = walk.pathFinder(box, pathFinderConfig)
         if path == nil then
+            Logger.log("Path not found")
             return false
         else
             if #path/steps < 0.6 then -- if the path is simple, sprint
                 sprint(true)
             end
-            walk.followPath(path)
+            local s = walk.followPath(path)
             sprint(false)
+            if not s then
+                Logger.log("Cannot follow path")
+                return false
+            end
         end
     end
 end
