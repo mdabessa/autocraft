@@ -162,7 +162,7 @@ walk.walkableBlock = function(pos, from, max_jump, max_fall, mask)
     end
 end
 
-walk.neighbors = function(current, max_jump, max_fall)
+walk.neighbors = function(current, max_jump, max_fall, canPlace, canBreak)
     local neighbors = {}
     for i = -1, 1 do
         for j = -1, 1 do
@@ -184,84 +184,87 @@ walk.neighbors = function(current, max_jump, max_fall)
     end
 
     -- place blocks
-    if current['max_place'] > 0 then
-        local mask = {}
-        for k, v in pairs(current['mask']) do mask[k] = v end
-        mask[Calc.pointToStr(current['pos'])] = 'minecraft:cobblestone'
-
-        local pos = {current['pos'][1], current['pos'][2]+1, current['pos'][3]}
-        local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
-        if block ~= nil then
-            local node = {
-                ['pos'] = block,
-                ['mask'] = mask,
-                ['mask_length'] = current['mask_length'] + 1,
-                ['place'] = {
-                    ['pos'] = pos,
-                    ['face'] = {current['pos'][1], current['pos'][2], current['pos'][3]},
-                },
-                ['max_place'] = current['max_place'] - 1,
-            }
-            table.insert(neighbors, node)
-        end
-    end
-
-    --break blocks
-    for i = -1, 1 do
-        for j = -1, 1 do
-            if (math.abs(i) + math.abs(j) == 2) or (i==0 and j==0) then goto continue end
-            local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
-            local pos1 = {current['pos'][1] + i, current['pos'][2]+1, current['pos'][3] + j}
+    if canPlace then
+        if current['max_place'] > 0 then
             local mask = {}
-            for key, value in pairs(current['mask']) do mask[key] = value end
-            mask[Calc.pointToStr(pos)] = 'minecraft:air'
-            mask[Calc.pointToStr(pos1)] = 'minecraft:air'
+            for k, v in pairs(current['mask']) do mask[k] = v end
+            mask[Calc.pointToStr(current['pos'])] = 'minecraft:cobblestone'
+
+            local pos = {current['pos'][1], current['pos'][2]+1, current['pos'][3]}
             local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
             if block ~= nil then
                 local node = {
                     ['pos'] = block,
                     ['mask'] = mask,
-                    ['mask_length'] = current['mask_length'] + 2,
-                    ['max_place'] = current['max_place'],
-                    ['break'] = {
-                        pos,
-                        pos1
-                    }
+                    ['mask_length'] = current['mask_length'] + 1,
+                    ['place'] = {
+                        ['pos'] = pos,
+                        ['face'] = {current['pos'][1], current['pos'][2], current['pos'][3]},
+                    },
+                    ['max_place'] = current['max_place'] - 1,
                 }
                 table.insert(neighbors, node)
             end
-            ::continue::
         end
     end
 
-    for i = -1, 1 do
-        for j = -1, 1 do
-            if (math.abs(i) + math.abs(j) == 2) or (i==0 and j==0) then goto continue end
-            local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
-            local pos1 = {current['pos'][1] + i, current['pos'][2]+1, current['pos'][3] + j}
-            local pos2 = {current['pos'][1] + i, current['pos'][2]-1, current['pos'][3] + j}
-            local mask = {}
-            for key, value in pairs(current['mask']) do mask[key] = value end
-            mask[Calc.pointToStr(pos)] = 'minecraft:air'
-            mask[Calc.pointToStr(pos1)] = 'minecraft:air'
-            mask[Calc.pointToStr(pos2)] = 'minecraft:air'
-
-            local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
-            if block ~= nil then
-                local node = {
-                    ['pos'] = block,
-                    ['mask'] = mask,
-                    ['mask_length'] = current['mask_length'] + 3,
-                    ['max_place'] = current['max_place'],
-                    ['break'] = {
-                        pos,
-                        pos1,
-                        pos2
+    if canBreak then
+        for i = -1, 1 do
+            for j = -1, 1 do
+                if (math.abs(i) + math.abs(j) == 2) or (i==0 and j==0) then goto continue end
+                local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
+                local pos1 = {current['pos'][1] + i, current['pos'][2]+1, current['pos'][3] + j}
+                local mask = {}
+                for key, value in pairs(current['mask']) do mask[key] = value end
+                mask[Calc.pointToStr(pos)] = 'minecraft:air'
+                mask[Calc.pointToStr(pos1)] = 'minecraft:air'
+                local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
+                if block ~= nil then
+                    local node = {
+                        ['pos'] = block,
+                        ['mask'] = mask,
+                        ['mask_length'] = current['mask_length'] + 2,
+                        ['max_place'] = current['max_place'],
+                        ['break'] = {
+                            pos,
+                            pos1
+                        }
                     }
-                }
-                table.insert(neighbors, node)
+                    table.insert(neighbors, node)
+                end
+                ::continue::
             end
-            ::continue::
+        end
+
+        for i = -1, 1 do
+            for j = -1, 1 do
+                if (math.abs(i) + math.abs(j) == 2) or (i==0 and j==0) then goto continue end
+                local pos = {current['pos'][1] + i, current['pos'][2], current['pos'][3] + j}
+                local pos1 = {current['pos'][1] + i, current['pos'][2]+1, current['pos'][3] + j}
+                local pos2 = {current['pos'][1] + i, current['pos'][2]-1, current['pos'][3] + j}
+                local mask = {}
+                for key, value in pairs(current['mask']) do mask[key] = value end
+                mask[Calc.pointToStr(pos)] = 'minecraft:air'
+                mask[Calc.pointToStr(pos1)] = 'minecraft:air'
+                mask[Calc.pointToStr(pos2)] = 'minecraft:air'
+
+                local block = walk.walkableBlock(pos, current['pos'], max_jump, max_fall, mask)
+                if block ~= nil then
+                    local node = {
+                        ['pos'] = block,
+                        ['mask'] = mask,
+                        ['mask_length'] = current['mask_length'] + 3,
+                        ['max_place'] = current['max_place'],
+                        ['break'] = {
+                            pos,
+                            pos1,
+                            pos2
+                        }
+                    }
+                    table.insert(neighbors, node)
+                end
+                ::continue::
+            end
         end
     end
     return neighbors
@@ -278,6 +281,8 @@ walk.pathFinder = function(objective, pathFinderConfig)
     local pathFinderTimeout = pathFinderConfig.pathFinderTimeout or 10
     local reverse = pathFinderConfig.reverse or false
     local weightMask = pathFinderConfig.weightMask or 1
+    local canPlace = pathFinderConfig.canPlace or true
+    local canBreak = pathFinderConfig.canBreak or true
 
     local start = os.clock()
 
@@ -329,7 +334,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
             return path_
         end
 
-        local neighbors_ = walk.neighbors(current, maxJump, maxFall)
+        local neighbors_ = walk.neighbors(current, maxJump, maxFall, canPlace, canBreak)
         for _, neighbor in pairs(neighbors_) do
             if list_open_ref[Calc.pointToStr(neighbor['pos'])] == nil and
                 list_closed[Calc.pointToStr(neighbor['pos'])] == nil then
@@ -522,7 +527,6 @@ end
 walk.followEntity = function(entity_id, min_dist, continue, pathFinderArgs)
     min_dist = min_dist or 5
     continue = continue or false
-    pathFinderArgs = pathFinderArgs or {1, 5, 10} -- max_jump, max_fall, pathFinderTimeout
 
     while true do
         local player = getPlayer()
