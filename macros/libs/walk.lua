@@ -281,8 +281,9 @@ walk.pathFinder = function(objective, pathFinderConfig)
     local pathFinderTimeout = pathFinderConfig.pathFinderTimeout or 10
     local reverse = pathFinderConfig.reverse or false
     local weightMask = pathFinderConfig.weightMask or 1
-    local canPlace = pathFinderConfig.canPlace or true
-    local canBreak = pathFinderConfig.canBreak or true
+
+    if pathFinderConfig.canPlace == nil then pathFinderConfig.canPlace = true end
+    if pathFinderConfig.canBreak == nil then pathFinderConfig.canBreak = true end
 
     local start = os.clock()
 
@@ -527,7 +528,9 @@ end
 walk.followEntity = function(entity_id, min_dist, continue, pathFinderArgs)
     min_dist = min_dist or 5
     continue = continue or false
-
+    pathFinderArgs = pathFinderArgs or {}
+    pathFinderArgs['canPlace'] = false
+    pathFinderArgs['canBreak'] = false
     while true do
         local player = getPlayer()
         local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
