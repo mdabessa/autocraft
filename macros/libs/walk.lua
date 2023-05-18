@@ -285,6 +285,9 @@ walk.pathFinder = function(objective, pathFinderConfig)
     if pathFinderConfig.canPlace == nil then pathFinderConfig.canPlace = true end
     if pathFinderConfig.canBreak == nil then pathFinderConfig.canBreak = true end
 
+    local canPlace = pathFinderConfig.canPlace
+    local canBreak = pathFinderConfig.canBreak
+
     local start = os.clock()
 
     local pos = getPlayer().pos
