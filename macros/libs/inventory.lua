@@ -122,4 +122,13 @@ inventory.sortHotbar = function()
     end
 end
 
+inventory.toolsDurability = function(tool)
+    local tools = inventory.findTools(tool)
+    local durability = 0
+    for i = 1, #tools do
+        durability = durability + tools[i].maxDmg - tools[i].dmg
+    end
+    return durability
+end
+
 return inventory

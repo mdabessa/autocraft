@@ -15,24 +15,75 @@ miner.ORES_HARVEST_LEVEL = {
     ["minecraft:obsidian"] = 4
 }
 
-miner.minePlace = {['place'] = nil, ['direction'] = nil}
+miner.getMinePoints = function ()
+    local s, points = pcall(Json.read, './miner.json')
+    if s == false then
+        return {}
+    elseif points['points'] == nil then
+        return {}
+    else
+        return points['points']
+    end
+end
 
+miner.addMinePoints = function (point)
+    local points = miner.getMinePoints()
+    table.insert(points, point)
+    Json.dump({['points'] = points}, './miner.json')
+end
 
-miner.getMinePlace = function ()
-    if miner.minePlace['place'] == nil then
+miner.resetMinePoints = function ()
+    Json.dump({}, './miner.json')
+end
+
+miner.goToMinePlace = function ()
+    local points = miner.getMinePoints()
+    if #points == 0 then
+        Home.goHome()
         local place = World.searchStructure(miner.minePlaceFinder, 5)
         if place == nil then error('No place to mine') end
-        miner.setMinePlace({place[1], place[2]+1, place[3]})
+        miner.addMinePoints({place[1], place[2]+1, place[3]})
+        points = miner.getMinePoints()
     end
-    return miner.minePlace['place']
+    local pos = getPlayer().pos
+
+    local closer = 1
+    local closer_distance = Calc.distance3d(pos, points[1])
+    for i = 2, #points do
+        local distance = Calc.distance3d(pos, points[i])
+        if distance < closer_distance then
+            closer = i
+            closer_distance = distance
+        end
+    end
+    for i = closer, #points do
+        local box = Calc.createBox(points[i], {5,5,5})
+        if Walk.walkTo(box, 50, {['pathFinderTimeout'] = 5}) == false then
+            error('Miner: Cannot reach mine place')
+        end
+    end
 end
 
-miner.setMinePlace = function (place)
-    miner.minePlace['place'] = place
-end
+miner.leaveMinePlace = function ()
+    local points = miner.getMinePoints()
+    local pos = getPlayer().pos
 
-miner.setMineDirection = function (direction)
-    miner.minePlace['direction'] = direction
+    local closer = 1
+    local closer_distance = Calc.distance3d(pos, points[1])
+    for i = 2, #points do
+        local distance = Calc.distance3d(pos, points[i])
+        if distance < closer_distance then
+            closer = i
+            closer_distance = distance
+        end
+    end
+
+    for i = closer, 1, -1 do
+        local box = Calc.createBox(points[i], {5,5,5})
+        if Walk.walkTo(box, 50, {['pathFinderTimeout'] = 5}) == false then
+            error('Miner: Cannot leave mine place')
+        end
+    end
 end
 
 miner.placeTorch = function ()
@@ -70,15 +121,19 @@ miner.checkPickaxeLevel = function(block_id)
     return true
 end
 
-miner.assertPickaxeLevel = function(block)
-    if miner.checkPickaxeLevel(block) then return nil end
+-- #TODO: Ao craftar uma picareta nova voltar para o ponto de mineração
+-- #TODO: Ao craftar uma picareta nova ir para home usando o leaveMinePlace
+miner.assertPickaxeLevel = function(block, min_durability)
+    min_durability = min_durability or 0
+    if miner.checkPickaxeLevel(block) and Inventory.toolsDurability('pickaxe') >= min_durability then return end -- Fast check
     Inventory.sortHotbar()
     local inv = openInventory()
     local map = inv.mapping.inventory
     local pickaxe_level = miner.ORES_HARVEST_LEVEL[block] or 1
     local slot = Inventory.getHotbarSlot('pickaxe')
     local item = inv.getSlot(map['hotbar'][slot])
-    if not Inventory.isTool(item, 'pickaxe') or Inventory.toolLevel(item.id) < pickaxe_level then
+    if (not Inventory.isTool(item, 'pickaxe') or Inventory.toolLevel(item.id) < pickaxe_level ) or
+        (Inventory.toolsDurability('pickaxe') < min_durability) then
         local pickaxe = Inventory.getToolIdFromLevel('pickaxe', pickaxe_level)
         Crafting.craft(pickaxe, 1)
         Inventory.sortHotbar()
@@ -97,6 +152,8 @@ miner.minePlaceFinder = function(pos)
             if _block == nil then return false end
             if _block.id == 'minecraft:water' then return false end
             if _block.id == 'minecraft:air' then return false end
+            if _block.id == 'minecraft:lava' then return false end
+            if _block.id == 'minecraft:leaves' then return false end
             if Walk.walkableBlock({pos[1], pos[2]+1, pos[3]}, {_pos[1], _pos[2]+1, _pos[3]})
                 == false then return false end
         end
@@ -114,29 +171,14 @@ miner.mineDown = function(direction)
     local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
     local light = getLight(pos[1], pos[2]+1, pos[3])
 
-    if light < 4 then miner.placeTorch() end
-    while true do
-        local complete = 0
-        for i = 0, 3 do
-            complete = complete + 1
-            local layer = i
-            if i == 3 then layer = -1 end
+    if light < 6 then miner.placeTorch() end
+    miner.assertPickaxeLevel('minecraft:stone', 15)
 
-            if miner.checkPickaxeLevel('minecraft:stone') == false then return nil end
+    local point = {pos[1]+(direction[1]*5), pos[2]-5, pos[3]+(direction[2]*5)}
+    local box = Calc.createBox(point, {3, 1, 3})
 
-            local _pos = {pos[1]+direction[1], pos[2] + layer, pos[3]+direction[2]}
-            local block = getBlock(_pos[1], _pos[2], _pos[3])
-            if block ~= nil and block.id ~= 'minecraft:air' then
-                lookAt(_pos[1]+ 0.5, _pos[2], _pos[3]+0.5)
-                if Action.safeDig() then
-                    complete = 0
-                end
-            end
-        end
-        if complete == 4 then break end
-    end
-
-    return {pos[1] + direction[1], pos[2] - 1, pos[3]+direction[2]}
+    local config = {['pathFinderTimeout'] = 10, ['weightMask'] = 0, ['maxFall'] = 3}
+    if Walk.walkTo(box, 50, config) == false then error('Miner: Cannot walk to box') end
 end
 
 miner.mineForward = function(direction)
@@ -210,49 +252,55 @@ miner.mine = function(objective, quantity)
     miner.assertPickaxeLevel(objective)
     local count = Inventory.countItems(objective)
     local goal = count + quantity
-    local place = miner.getMinePlace()
-    local box = Calc.createBox(place, {1,1,1})
-    if Walk.walkTo(box, 50, {nil, nil, 5}) == false then return false end
+
+    miner.goToMinePlace()
+
     local directions = {{1,0}, {0,1}, {-1,0}, {0,-1}}
-    local possible_directions = {}
+    local direction_index = math.random(1, #directions)
+    local direction = table.remove(directions, direction_index)
+    local opposite_direction_index = Table.find(directions, {direction[1] * -1, direction[2] * -1})
+    table.remove(directions, opposite_direction_index)
 
-    for i = 1, #directions do table.insert(possible_directions, directions[i]) end
-    local direction_index = math.random(1, #possible_directions)
-    local direction = Miner.minePlace['direction'] or table.remove(possible_directions, direction_index)
-    local opposite_direction_index = Table.find(possible_directions, {direction[1] * -1, direction[2] * -1})
-    table.remove(possible_directions, opposite_direction_index)
-
+    local c = 0
     while count < goal do
         miner.assertPickaxeLevel(objective)
-        box = Calc.createBox(place, {1,2,1})
-        if Walk.walkTo(box, 50, {1, 1, 1}) == false then
-            if #possible_directions == 0 then error('Miner: No possible directions') end
-            direction = table.remove(possible_directions, math.random(1, #possible_directions))
-        else
-            for i = 1, #directions do table.insert(possible_directions, directions[i]) end
-            direction_index = Table.find(possible_directions, direction)
-            table.remove(possible_directions, direction_index)
-            opposite_direction_index = Table.find(possible_directions, {direction[1] * -1, direction[2] * -1})
-            table.remove(possible_directions, opposite_direction_index)
-        end
-        miner.setMinePlace(place)
-        miner.setMineDirection(direction)
-        local next_pos = nil
 
-        if getPlayer().pos[2] > 11 then
-            next_pos = miner.mineDown(direction)
-        else
-            next_pos = miner.mineForward(direction)
+        local f = miner.mineDown
+        if getPlayer().pos[2] <= 11 then
+            f = miner.mineForward
+        end
+        local s, err = pcall(f, direction)
+        if s == false then
+            if string.find(err, 'Miner: Cannot walk to box') then
+                if #directions == 0 then error('Miner: Cannot find a place to mine') end
+                direction_index = math.random(1, #directions)
+                direction = table.remove(directions, direction_index)
+                goto continue
+            else
+                error(err)
+            end
         end
 
-        if next_pos == nil then goto continue end
-        place = next_pos
+        if #directions < 2 then -- reset directions
+            directions = {{1,0}, {0,1}, {-1,0}, {0,-1}}
+            direction_index = Table.find(directions, direction)
+            table.remove(directions, direction_index)
+            opposite_direction_index = Table.find(directions, {direction[1] * -1, direction[2] * -1})
+            table.remove(directions, opposite_direction_index)
+        end
+
+        if c % 5 == 0 then
+            local pos = getPlayer().pos
+            miner.addMinePoints({pos[1], pos[2], pos[3]})
+        end
 
         miner.mineOres(direction)
         count = Inventory.countItems(objective)
         Logger.log('Mining ' .. objective .. ' ' .. count .. '/' .. goal)
+        c = c + 1
         ::continue::
     end
+    miner.leaveMinePlace()
 end
 
 return miner

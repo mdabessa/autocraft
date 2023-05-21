@@ -147,7 +147,7 @@ end
 function json.read(file)
   local f = io.open(file, 'r')
   if f == nil then error('File not found: ' .. file) end
-  local content = f:read('a')
+  local content = f:read('*all')
   f:close()
   return json.parse(content)
 end
