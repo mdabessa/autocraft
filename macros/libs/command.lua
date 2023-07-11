@@ -21,7 +21,7 @@ end
 
 command.execute = function(str, callback)
     local content = Str.split(str, ' ')
-    if #content == 0 then return false end
+    if #content == 0 then return nil end
     local cmd = string.lower(content[1])
     local args = ''
 
@@ -37,7 +37,7 @@ command.execute = function(str, callback)
             command.threads[i]:stop()
         end
         command.threads = {}
-        return true
+        return nil
     end
 
     if command.alias[cmd] ~= nil then
@@ -56,10 +56,8 @@ command.execute = function(str, callback)
         cmd_thread:start()
 
         table.insert(command.threads, cmd_thread)
-        return true
+        return cmd_thread
     end
-
-    return false
 end
 
 command.commands = {}
@@ -76,7 +74,7 @@ command.commands.follow = function (args)
     args = Str.split(args, ' ')
     local entity_name = args[1]
     if entity_name == nil then
-        log('Please specify a enity')
+        error('Please specify an entity to follow')
         return
     end
 
@@ -90,7 +88,7 @@ command.commands.follow = function (args)
     end
 
     if entity == nil then
-        log('Entity not found')
+        error('Entity not found to follow')
         return
     end
 
@@ -107,9 +105,9 @@ command.commands.goTo = function (args)
         local z = tonumber(args[3])
 
         local box = Calc.createBox({x, y, z}, 1)
-        local s = Walk.walkTo(box, 50, {nil, nil, 2})
+        local s = Walk.walkTo(box, 50, {nil, nil, 10})
         if s == false then
-            log('Could not reach destination')
+            error('Could not reach destination')
         end
     elseif #args == 1 then
         local entity_name = args[1]
@@ -123,7 +121,7 @@ command.commands.goTo = function (args)
         end
 
         if entity == nil then
-            log('Entity not found')
+            error('Entity not found to go to')
             return
         end
 
@@ -134,7 +132,7 @@ command.commands.goTo = function (args)
         entity = getEntity(entity_id)
         lookAt(entity.pos[1], entity.pos[2]+entity.width-0.2, entity.pos[3])
     else
-        log('Please specify a enity name or coordinates')
+        error('Please specify a enity name or coordinates to go to')
     end
 
 end
@@ -146,12 +144,12 @@ end
 command.commands.craft = function (args)
     local item = args
     if item == nil then
-        log('Please specify an item')
+        error('Please specify an item')
         return
     end
 
     if string.sub(item, 1, 10) ~= 'minecraft:' then
-        log('A minecraft id must be specified')
+        error('A minecraft id must be specified')
     end
 
     Crafting.craft(item, 1)
@@ -160,18 +158,18 @@ end
 command.commands.drop = function (args)
     local item = args
     if item == nil then
-        log('Please specify an item')
+        error('Please specify an item')
         return
     end
 
     if string.sub(item, 1, 10) ~= 'minecraft:' then
-        log('A minecraft id must be specified')
+        error('A minecraft id must be specified')
         return
     end
 
     item = Inventory.findItem(item)
     if next(item) == nil then
-        log('Item not found')
+        error('Item not found in inventory')
         return
     end
     local slot, _ = next(item)
@@ -190,7 +188,7 @@ command.commands.give = function (args)
 
     args = Str.split(args, ' ')
     if #args ~= 2 then
-        log('Please specify an item and an entity')
+        error('Please specify an item and an entity')
         return
     end
 
@@ -198,7 +196,7 @@ command.commands.give = function (args)
     item_name = args[2]
 
     if string.sub(item_name, 1, 10) ~= 'minecraft:' then
-        log('A minecraft id must be specified')
+        error('A minecraft id must be specified')
         return
     end
 
@@ -212,7 +210,7 @@ command.commands.give = function (args)
     end
 
     if entity == nil then
-        log('Entity not found')
+        error('Entity not found')
         return
     end
 
@@ -222,7 +220,7 @@ command.commands.give = function (args)
         Crafting.craft(item_name, 1)
         item = Inventory.findItem(item_name)
         if next(item) == nil then
-            log('Could not craft item')
+            error('Could not craft item')
             return
         end
     end
