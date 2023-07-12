@@ -33,8 +33,9 @@ db.update = function(sql)
     sql_connection:close()
 end
 
-db.add_event = function(event)
-    db.update("insert into events (event, created_at) values ('" .. event .. "', now())")
+db.add_event = function(event, type)
+    type = type or 'minecraft'
+    db.update("insert into events (event, created_at, type) values ('" .. event .. "', now(), '" .. type .. "')")
 end
 
 db.get_command = function()
