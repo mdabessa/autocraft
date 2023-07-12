@@ -9,5 +9,6 @@ local whitelist = {
 
 if whitelist[args[2]] then
     Database.add_event(args[1])
+    Logger.log('Added event: ' .. args[1])
 end
 
