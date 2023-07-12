@@ -1,5 +1,15 @@
 Libs = require('libs/init')
 
+local callback = function(status, err)
+    if status == false and
+        err ~= nil and
+        err ~= 'Script was stopped'
+    then
+        local msg = Str.errorResume(err)
+        Database.add_event(msg)
+    end
+end
+
 local last = nil
 while true do
     Command.thread_cleanup()
@@ -12,12 +22,12 @@ while true do
             end
 
             if tonumber(command[1].priority) < priority then
-                Command.execute(command[1].command)
+                Command.execute(command[1].command, callback)
                 last = tonumber(command[1].priority)
                 Database.delete_command(command[1].id)
             end
         else
-            Command.execute(command[1].command)
+            Command.execute(command[1].command, callback)
             last = tonumber(command[1].priority)
             Database.delete_command(command[1].id)
         end
