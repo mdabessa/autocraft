@@ -121,8 +121,6 @@ miner.checkPickaxeLevel = function(block_id)
     return true
 end
 
--- #TODO: Ao craftar uma picareta nova voltar para o ponto de mineração
--- #TODO: Ao craftar uma picareta nova ir para home usando o leaveMinePlace
 miner.assertPickaxeLevel = function(block, min_durability)
     min_durability = min_durability or 0
     if miner.checkPickaxeLevel(block) and Inventory.toolsDurability('pickaxe') >= min_durability then return end -- Fast check
@@ -135,6 +133,7 @@ miner.assertPickaxeLevel = function(block, min_durability)
     if (not Inventory.isTool(item, 'pickaxe') or Inventory.toolLevel(item.id) < pickaxe_level ) or
         (Inventory.toolsDurability('pickaxe') < min_durability) then
         local pickaxe = Inventory.getToolIdFromLevel('pickaxe', pickaxe_level)
+        miner.leaveMinePlace()
         Crafting.craft(pickaxe, 1)
         Inventory.sortHotbar()
     end
@@ -173,6 +172,10 @@ miner.mineDown = function(direction)
 
     if light < 6 then miner.placeTorch() end
     miner.assertPickaxeLevel('minecraft:stone', 15)
+    local new_pos = getPlayer().pos
+    if Calc.distance3d(pos, new_pos) > 2 then -- if player leave the mine place to craft a pickaxe
+        Miner.goToMinePlace()
+    end
 
     local point = {pos[1]+(direction[1]*5), pos[2]-5, pos[3]+(direction[2]*5)}
     local box = Calc.createBox(point, {3, 1, 3})
