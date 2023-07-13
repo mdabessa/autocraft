@@ -68,21 +68,25 @@ miner.leaveMinePlace = function ()
     local points = miner.getMinePoints()
     local pos = getPlayer().pos
 
-    local closer = 1
-    local closer_distance = Calc.distance3d(pos, points[1])
-    for i = 2, #points do
-        local distance = Calc.distance3d(pos, points[i])
-        if distance < closer_distance then
-            closer = i
-            closer_distance = distance
+    if #points > 0 then
+        local closer = 1
+        local closer_distance = Calc.distance3d(pos, points[1])
+        for i = 2, #points do
+            local distance = Calc.distance3d(pos, points[i])
+            if distance < closer_distance then
+                closer = i
+                closer_distance = distance
+            end
         end
-    end
 
-    for i = closer, 1, -1 do
-        local box = Calc.createBox(points[i], {5,5,5})
-        if Walk.walkTo(box, 50, {['pathFinderTimeout'] = 5}) == false then
-            error('Miner: Cannot leave mine place')
+        for i = closer, 1, -1 do
+            local box = Calc.createBox(points[i], {5,5,5})
+            if Walk.walkTo(box, 50, {['pathFinderTimeout'] = 5}) == false then
+                error('Miner: Cannot leave mine place')
+            end
         end
+    else
+        Home.goHome()
     end
 end
 
