@@ -4,3 +4,5 @@
 .vscode
 *.sqlite3
 settings.txt
+macros/libs/utils/test.json
+macros/libs/utils/miner.json
