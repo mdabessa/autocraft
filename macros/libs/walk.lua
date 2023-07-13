@@ -403,6 +403,11 @@ walk.move = function(node)
             while true do
                 local block = getBlock(pos[1], pos[2], pos[3])
                 if block.id == 'minecraft:air' then break end
+
+                if Miner.checkPickaxeLevel(block.id) == false then
+                    Inventory.sortHotbar()
+                end
+
                 lookAt(pos[1]+0.5, pos[2]+0.5, pos[3]+0.5)
                 Action.dig()
                 sleep(100)
@@ -498,8 +503,7 @@ walk.walkTo = function(to, steps, pathFinderConfig)
 
         local path = walk.pathFinder(box, pathFinderConfig)
         if path == nil then
-            Logger.log("Path not found")
-            return false
+            error('Walk: Cannot find a valid path to the objective')
         else
             if #path/steps < 0.6 then -- if the path is simple, sprint
                 sprint(true)
@@ -507,7 +511,7 @@ walk.walkTo = function(to, steps, pathFinderConfig)
             local s = walk.followPath(path)
             sprint(false)
             if not s then
-                Logger.log("Cannot follow path")
+                Logger.log("Walk: Cannot follow the path of the pathfinder")
                 return false
             end
         end
