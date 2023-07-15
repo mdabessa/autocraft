@@ -278,13 +278,13 @@ miner.mine = function(objective, quantity)
         end
         local s, err = pcall(f, direction)
         if s == false then
-            if string.find(err, 'Miner: Cannot walk to box') then
+            if Str.errorResume(err) == 'Miner: Cannot walk to box' then
                 if #directions == 0 then error('Miner: Cannot find a place to mine') end
                 direction_index = math.random(1, #directions)
                 direction = table.remove(directions, direction_index)
                 goto continue
             else
-                error(err)
+                error(Str.errorResume(err))
             end
         end
 
