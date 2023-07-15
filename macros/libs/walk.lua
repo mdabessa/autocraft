@@ -467,7 +467,16 @@ end
 
 walk.followPath = function(path)
     for i = 1, #path do
+        if #path - i > 1 then
+            local dx = math.abs(path[i]["pos"][1] - path[i+2]["pos"][1])
+            local dy = math.abs(path[i]["pos"][3] - path[i+2]["pos"][3])
+
+            if (dx==0 or dy==0) or (dx==2 and dy==2) then
+                sprint(true)
+            end
+        end
         walk.move(path[i])
+        sprint(false)
     end
 end
 
@@ -498,11 +507,7 @@ walk.walkTo = function(to, steps, pathFinderConfig)
         if path == nil then
             error('Walk: Cannot find a valid path to the objective')
         else
-            if #path/steps < 0.6 then -- if the path is simple, sprint
-                sprint(true)
-            end
             walk.followPath(path)
-            sprint(false)
         end
     end
 end
