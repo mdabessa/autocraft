@@ -386,8 +386,7 @@ walk.move = function(node)
                 if block ~= nil and block.id ~= 'minecraft:air' then break end
                 sleep(100)
                 if os.clock() - time > 3 then
-                    Logger.log("Player taking too long to place blocks")
-                    return false
+                    error("Player taking too long to place blocks")
                 end
             end
 
@@ -413,8 +412,7 @@ walk.move = function(node)
                 sleep(100)
 
                 if os.clock() - time > (3*#blocks) then
-                    Logger.log("Player taking too long to break blocks")
-                    return false
+                    error("Player taking too long to break blocks")
                 end
             end
         end
@@ -423,15 +421,14 @@ walk.move = function(node)
     time = os.clock()
     while true do
         local now = os.clock()
-        if now - time > 3 then -- player stuck
-            Logger.log("Player stuck")
-            return false
+        if now - time > 3 then
+            error("Player stuck")
         end
 
         player = getPlayer()
         local from = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
         if Calc.compareArray(from, to) then
-            return true
+            return
         end
 
         local block = getBlock(from[1], from[2], from[3])
@@ -470,12 +467,8 @@ end
 
 walk.followPath = function(path)
     for i = 1, #path do
-        local success = walk.move(path[i])
-        if not success then
-            return false
-        end
+        walk.move(path[i])
     end
-    return true
 end
 
 walk.walkTo = function(to, steps, pathFinderConfig)
@@ -508,12 +501,8 @@ walk.walkTo = function(to, steps, pathFinderConfig)
             if #path/steps < 0.6 then -- if the path is simple, sprint
                 sprint(true)
             end
-            local s = walk.followPath(path)
+            walk.followPath(path)
             sprint(false)
-            if not s then
-                Logger.log("Walk: Cannot follow the path of the pathfinder")
-                return false
-            end
         end
     end
 end
