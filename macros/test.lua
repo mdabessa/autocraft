@@ -5,13 +5,18 @@ local function craft(item, qtd, timeout)
     qtd = qtd or 1
 
     local results = {}
-    local x, y = -10000, 0
 
     for i=1, qtd do
+        Home.resetHome()
+        Miner.resetMinePoints()
+        local pos = getPlayer().pos
+        local x = pos[1]
+        local y = pos[3]
+
         say('/clear')
         sleep(200)
         say('/gamemode creative')
-        if i%2==1 then x = x + 10000 else y = y + 10000 end
+        if i%2==1 then x = x + math.random(5000, 10000) else y = y + math.random(5000, 10000) end
         say('/tp ' .. tostring(x) .. ' 300 ' .. tostring(y))
         sleep(1000)
 
@@ -23,13 +28,24 @@ local function craft(item, qtd, timeout)
 
         local result = {
             ['status'] = true,
-            ['error'] = nil
+            ['startPos'] = {x,0,y},
+            ['world'] = getWorld(),
+            ['biome'] = getBiome(),
+            ['error'] = nil,
+            ['traceback'] = nil,
+            ['log'] = {}
         }
+
+        Logger.callback = function (msg)
+            table.insert(result['log'], {['time'] = os.time(), ['message'] = msg})
+        end
+
         local start = os.time()
         local t = Command.execute('craft ' .. item, function (stt, err)
             result['status'] = stt
             if err ~= nil then
                 result['error'] = Str.errorResume(err)
+                result['traceback'] = err
             end
         end)
 
@@ -44,15 +60,17 @@ local function craft(item, qtd, timeout)
         end
         local _end = os.time()
 
+        result['endPos'] = getPlayer().pos
         result['timeTaken'] = _end - start
         result['timeStart'] = start
         result['timeEnd'] = _end
 
         table.insert(results, result)
+        Logger.callback = nil
+        Json.dump({['tests'] = results}, './test.json')
     end
-    Json.dump({['tests'] = results}, './test.json')
 end
 
 
-craft('minecraft:stick', 10, 30)
+craft('minecraft:stone_sword', 20, 60*3)
 
