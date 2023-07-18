@@ -59,6 +59,11 @@ local function craft(item, qtd, timeout)
             end
         end
         local _end = os.time()
+        if result['error'] == nil then
+            Logger.log('Success')
+        else
+            Logger.log('Error: ' .. result['error'])
+        end
 
         result['endPos'] = getPlayer().pos
         result['timeTaken'] = _end - start
@@ -67,10 +72,13 @@ local function craft(item, qtd, timeout)
 
         table.insert(results, result)
         Logger.callback = nil
-        Json.dump({['tests'] = results}, './test.json')
+
+        local item_name = Str.split(item, ':')[2]
+        local path ='.\\tests\\' .. item_name .. '.json'
+        Json.dump({['tests'] = results}, path)
     end
 end
 
 
-craft('minecraft:stone_sword', 20, 60*3)
+craft('minecraft:stone_sword', 30, 60*3)
 
