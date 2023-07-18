@@ -153,6 +153,9 @@ function json.read(file)
 end
 
 function json.dump(obj, file)
+  file = file or 'json.dump'
+  file = '..\\..\\' .. file -- Relative to the macro directory
+
   local f = io.open(file, 'w')
   f:write(json.stringify(obj))
   f:close()
