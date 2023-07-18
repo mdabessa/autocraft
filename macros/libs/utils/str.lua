@@ -24,4 +24,17 @@ str.errorResume = function(err)
     return res
 end
 
+str.join = function(t, sep, start, finish)
+    start = start or 1
+    finish = finish or #t
+    sep = sep or ','
+
+    local res = ''
+    for i = start, finish do
+        res = res .. t[i] .. sep
+    end
+    res = res:sub(1, -2)
+    return res
+end
+
 return str
