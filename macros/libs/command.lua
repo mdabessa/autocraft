@@ -105,7 +105,7 @@ command.commands.goTo = function (args)
         local z = tonumber(args[3])
 
         local box = Calc.createBox({x, y, z}, 1)
-        local s = Walk.walkTo(box, 50, {nil, nil, 10})
+        local s = Walk.walkTo(box, 50)
         if s == false then
             error('Could not reach destination')
         end
