@@ -482,6 +482,7 @@ end
 
 walk.walkTo = function(to, steps, pathFinderConfig)
     steps = steps or 50
+    pathFinderConfig = pathFinderConfig or {}
     local reverse = pathFinderConfig.reverse or false
 
     while true do
