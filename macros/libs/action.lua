@@ -1,6 +1,8 @@
 local action = {}
 
-action.dig = function()
+action.dig = function(timeout)
+    timeout = timeout or 5
+
     local lookingPos = getPlayer().lookingAt
     local actualLookingPos = {lookingPos[1], lookingPos[2], lookingPos[3]}
     local block = getBlock(lookingPos[1], lookingPos[2], lookingPos[3])
@@ -12,9 +14,11 @@ action.dig = function()
     local start = os.clock()
     while Calc.compareArray(actualLookingPos, lookingPos) do
         attack(-1)
+
         actualLookingPos = getPlayer().lookingAt
-        if os.clock() - start > 5 then
+        if os.clock() - start > timeout then
             attack(0)
+            Logger.log('Dig timeout')
             return false
         end
     end
@@ -55,8 +59,8 @@ action.breakNearbyBlocks = function(block_id, timeout, range)
                 for k=-range[3], range[3] do
                     if block_list[{pos[1]+i, pos[2]+j, pos[3]+k}] then goto continue end
 
-                    local block = getBlock(pos[1]+i, pos[2]+j, pos[3]+k)
-                    if block ~= nil and block.id == block_id then
+                    local block = Walk.getBlockId({pos[1]+i, pos[2]+j, pos[3]+k})
+                    if block ~= nil and block == block_id then
                         lookAt(pos[1]+i+0.5, pos[2]+j+0.5, pos[3]+k+0.5)
                         local s = Action.dig()
                         if s == false then
@@ -231,14 +235,14 @@ action.placeBlock = function(block_id, pos)
     use()
     sleep(100)
 
-    local block = getBlock(pos[1], pos[2], pos[3])
-    if not block or block.id ~= block_id then return false end
+    local block = Walk.getBlockId({face.neighbor[1], face.neighbor[2], face.neighbor[3]})
+    if block == nil or block ~= block_id then return false end
     return true
 end
 
 action.breakFlower = function (pos)
-    local block = getBlock(pos[1], pos[2], pos[3])
-    if block.id == 'minecraft:air' then return true end
+    local block = Walk.getBlockId(pos)
+    if block == 'minecraft:air' then return true end
 
     local steps = 3
     for i=1, steps do
@@ -250,9 +254,9 @@ action.breakFlower = function (pos)
                 attack(100)
                 sleep(100)
 
-                block = getBlock(pos[1], pos[2], pos[3])
+                block = Walk.getBlockId(pos)
                 if block == nil or block == false then return false end
-                if block.id == 'minecraft:air' then return true end
+                if block == 'minecraft:air' then return true end
             end
         end
     end
