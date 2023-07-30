@@ -488,7 +488,7 @@ end
 walk.walkTo = function(to, steps, pathFinderConfig)
     steps = steps or 50
     pathFinderConfig = pathFinderConfig or {}
-    pathFinderConfig.blacklist_postions = pathFinderConfig.blacklist_postionss or {}
+    pathFinderConfig.blacklist_postions = pathFinderConfig.blacklist_postions or {}
     local reverse = pathFinderConfig.reverse or false
 
     local errors_count = 0
