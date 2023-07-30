@@ -1,20 +1,21 @@
 local wood = {}
 
 wood.isTree = function(pos)
-    local block = getBlock(pos[1], pos[2], pos[3])
+    -- #TODO: dont use GetBlockId, because it is slow when using Dictionary to parse the IDs
+    local block = Walk.getBlockId(pos)
     if block == nil then return false end
-    if block.id ~= 'minecraft:log' and block.id ~= 'minecraft:leaves' then return false end
+    if block ~= 'minecraft:log' and block ~= 'minecraft:leaves' then return false end
 
     -- search for the root of the tree
     for dx = -2, 2 do
         for dy = -5, 0 do
             for dz = -2, 2 do
-                local _block = getBlock(pos[1]+dx, pos[2]+dy, pos[3]+dz)
-                if _block == nil or _block.id ~= 'minecraft:log' then goto continue end
+                local _block = Walk.getBlockId({pos[1]+dx, pos[2]+dy, pos[3]+dz})
+                if _block == nil or _block ~= 'minecraft:log' then goto continue end
 
-                local ground = getBlock(pos[1]+dx, pos[2]+dy-1, pos[3]+dz)
-                if ground == nil or ground.id == 'minecraft:air'
-                    or ground.id == 'minecraft:log' or ground.id == 'minecraft:leaves'
+                local ground = Walk.getBlockId({pos[1]+dx, pos[2]+dy-1, pos[3]+dz})
+                if ground == nil or ground == 'minecraft:air'
+                    or ground == 'minecraft:log' or ground == 'minecraft:leaves'
                     then goto continue end
                 do return {pos[1]+dx, pos[2]+dy, pos[3]+dz} end
                 ::continue::

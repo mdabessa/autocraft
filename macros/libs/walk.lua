@@ -2,58 +2,46 @@ local walk = {}
 
 walk.intangibleBlocks = {
     ['minecraft:air'] = true,
-    ['minecraft:sapling'] = true,
-    ['minecraft:web'] = true,
-    ['minecraft:tallgrass'] = true,
-    ['minecraft:deadbush'] = true,
-    ['minecraft:yellow_flower'] = true,
-    ['minecraft:red_flower'] = true,
+    ['minecraft:cave_air'] = true,
+    ['minecraft:cobweb'] = true,
+    ['minecraft:grass'] = true,
+    ['minecraft:fern'] = true,
+    ['minecraft:dead_bush'] = true,
+    ['minecraft:sea_pickle'] = true,
+    ['minecraft:dandelion'] = true,
+    ['minecraft:poppy'] = true,
+    ['minecraft:blue_orchid'] = true,
+    ['minecraft:allium'] = true,
+    ['minecraft:azure_bluet'] = true,
+    ['minecraft:red_tulip'] = true,
+    ['minecraft:orange_tulip'] = true,
+    ['minecraft:white_tulip'] = true,
+    ['minecraft:pink_tulip'] = true,
+    ['minecraft:oxeye_daisy'] = true,
+    ['minecraft:cornflower'] = true,
     ['minecraft:brown_mushroom'] = true,
     ['minecraft:red_mushroom'] = true,
     ['minecraft:torch'] = true,
-    ['minecraft:snow_layer'] = true,
-    ['minecraft:carpet'] = true,
-    ['minecraft:double_plant'] = true,
+    ['minecraft:ladder'] = true,
+    ['minecraft:snow'] = true,
+    ['minecraft:vine'] = true,
+    ['minecraft:lily_pad'] = true,
+    ['minecraft:sunflower'] = true,
+    ['minecraft:lilac'] = true,
+    ['minecraft:rose_bush'] = true,
+    ['minecraft:tall_grass'] = true,
+    ['minecraft:large_fern'] = true,
     ['minecraft:painting'] = true,
-    ['minecraft:sign'] = true,
     ['minecraft:item_frame'] = true,
-    ['minecraft:flower_pot'] = true,
-    ['minecraft:skull'] = true,
-    ['minecraft:banner'] = true,
-    ['minecraft:lever'] = true,
-    ['minecraft:stone_pressure_plate'] = true,
-    ['minecraft:wooden_pressure_plate'] = true,
-    ['minecraft:redstone_torch'] = true,
-    ['minecraft:stone_button'] = true,
-    ['minecraft:tripwire_hook'] = true,
-    ['minecraft:wooden_button'] = true,
-    ['minecraft:light_weighted_pressure_plate'] = true,
-    ['minecraft:heavy_weighted_pressure_plate'] = true,
-    ['minecraft:daylight_detector'] = true,
-    ['minecraft:redstone_wire'] = true,
     ['minecraft:repeater'] = true,
-    ['minecraft:unpowered_comparator'] = true,
-    ['minecraft:powered_comparator'] = true,
-    ['minecraft:golden_rail'] = true,
-    ['minecraft:detector_rail'] = true,
-    ['minecraft:rail'] = true,
-    ['minecraft:activator_rail'] = true,
-    ['minecraft:tripwire'] = true,
-    ['minecraft:wheat'] = true,
-    ['minecraft:potatoes'] = true,
-    ['minecraft:carrots'] = true,
-    ['minecraft:beetroots'] = true,
-    ['minecraft:melon_stem'] = true,
-    ['minecraft:pumpkin_stem'] = true,
-    ['minecraft:attached_melon_stem'] = true,
-    ['minecraft:attached_pumpkin_stem'] = true,
-    ['minecraft:reeds'] = true
+    ['minecraft:comparator'] = true,
+
 }
 
 walk.placeableBlocks = {
     ['minecraft:dirt'] = true,
     ['minecraft:cobblestone'] = true,
-    ['minecraft:planks'] = true,
+    ['minecraft:planks'] = true, -- #TODO: convert with dictonary
 }
 
 walk.fastPlace = function ()
@@ -91,12 +79,21 @@ walk.getBlockId = function(pos, mask)
 
     local block = getBlock(pos[1], pos[2], pos[3])
     if block == nil then return nil end
-    return block.id
+    local id = Dictionary.getGroup(block.id)
+    return id
 end
 
 walk.solidBlock = function(block_id)
     if walk.intangibleBlocks[block_id] then return false end
 
+    if string.find(block_id, 'sapling') then return false end
+    if string.find(block_id, 'carpet') then return false end
+    if string.find(block_id, 'coral') then return false end
+    if string.find(block_id, 'sign') then return false end
+    if string.find(block_id, 'banner') then return false end
+    if string.find(block_id, 'pressure_plate') then return false end
+    if string.find(block_id, 'button') then return false end
+    if string.find(block_id, 'rail') then return false end
     if string.find(block_id, 'double_slab') then return true end
     if string.find(block_id, 'slab') then return false end
 
@@ -281,14 +278,12 @@ walk.pathFinder = function(objective, pathFinderConfig)
     local pathFinderTimeout = pathFinderConfig.pathFinderTimeout or 10
     local reverse = pathFinderConfig.reverse or false
     local weightMask = pathFinderConfig.weightMask or 1
-
     if pathFinderConfig.canPlace == nil then pathFinderConfig.canPlace = true end
     if pathFinderConfig.canBreak == nil then pathFinderConfig.canBreak = true end
-
     local canPlace = pathFinderConfig.canPlace
     local canBreak = pathFinderConfig.canBreak
 
-    local start = os.clock()
+    local start = os.time()
 
     local pos = getPlayer().pos
     local start_pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
@@ -319,7 +314,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
     local list_open_ref = {}
 
     while #list_open > 0 do
-        if os.clock() - start > pathFinderTimeout then return nil end
+        if os.time() - start > pathFinderTimeout then return nil end
         local current = table.remove(list_open, 1)
 
         if (Calc.inBox(current['pos'], objective) and not reverse) or
@@ -340,6 +335,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
 
         local neighbors_ = walk.neighbors(current, maxJump, maxFall, canPlace, canBreak)
         for _, neighbor in pairs(neighbors_) do
+            if pathFinderConfig.blacklist_postions[Calc.pointToStr(neighbor['pos'])] ~= nil then goto continue end
             if list_open_ref[Calc.pointToStr(neighbor['pos'])] == nil and
                 list_closed[Calc.pointToStr(neighbor['pos'])] == nil then
 
@@ -355,6 +351,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
 
                 list_open_ref[Calc.pointToStr(neighbor['pos'])] = true
             end
+            ::continue::
         end
 
         list_closed[Calc.pointToStr(current['pos'])] = true
@@ -364,7 +361,7 @@ end
 
 walk.move = function(node)
     local player = getPlayer()
-    local time = os.clock()
+    local time = os.time()
 
     local to = node['pos']
 
@@ -375,6 +372,13 @@ walk.move = function(node)
         lookAt(face[1], face[2], face[3])
         sleep(200)
 
+        local block = walk.getBlockId(face)
+        if block ~= 'minecraft:air' and walk.solidBlock(block) == false then
+            lookAt(face[1]+0.5, face[2], face[3]+0.5)
+            sleep(200)
+            Action.dig()
+        end
+
         if pos[1] - face[1] == 0 and pos[2] - face[2] == 0 and pos[3] - face[3] == 0 then
             while true do
                 jump(1)
@@ -382,10 +386,10 @@ walk.move = function(node)
 
                 walk.fastPlace()
 
-                local block = getBlock(face[1], face[2], face[3])
-                if block ~= nil and block.id ~= 'minecraft:air' then break end
+                block = walk.getBlockId(face)
+                if block ~= 'minecraft:air' then break end
                 sleep(100)
-                if os.clock() - time > 3 then
+                if os.time() - time > 3 then
                     error("Player taking too long to place blocks")
                 end
             end
@@ -401,8 +405,7 @@ walk.move = function(node)
             local pos = blocks[i]
             while true do
                 local block = getBlock(pos[1], pos[2], pos[3])
-                if block.id == 'minecraft:air' then break end
-
+                if walk.solidBlock(block.id) == false then break end
                 if Miner.checkPickaxeLevel(block.id) == false then
                     Inventory.sortHotbar()
                 end
@@ -411,16 +414,16 @@ walk.move = function(node)
                 Action.dig()
                 sleep(100)
 
-                if os.clock() - time > (3*#blocks) then
+                if os.time() - time > (3*#blocks) then
                     error("Player taking too long to break blocks")
                 end
             end
         end
     end
 
-    time = os.clock()
+    time = os.time()
     while true do
-        local now = os.clock()
+        local now = os.time()
         if now - time > 3 then
             error("Player stuck")
         end
@@ -441,7 +444,7 @@ walk.move = function(node)
         local yaw = math.atan2((to[3]+0.5) - player.pos[3], (to[1]+0.5) - player.pos[1]) * 180 / math.pi - 90
         local old_yaw = player.yaw
 
-        local step = (yaw - old_yaw)/10
+        local step = (yaw - old_yaw)/20
         local next = old_yaw + step
         if yaw - next < 1 then next = yaw end
 
@@ -466,25 +469,29 @@ walk.move = function(node)
 end
 
 walk.followPath = function(path)
-    for i = 1, #path do
-        if #path - i > 1 then
-            local dx = math.abs(path[i]["pos"][1] - path[i+2]["pos"][1])
-            local dy = math.abs(path[i]["pos"][3] - path[i+2]["pos"][3])
+    while #path > 0 do
+        if #path > 2 then
+            local dx = math.abs(path[1]["pos"][1] - path[3]["pos"][1])
+            local dy = math.abs(path[1]["pos"][2] - path[2]["pos"][2])
+            local dz = math.abs(path[1]["pos"][3] - path[3]["pos"][3])
 
-            if (dx==0 or dy==0) or (dx==2 and dy==2) then
+            if ((dx==0 or dz==0) or (dx==2 and dz==2)) and dy==0 then
                 sprint(true)
             end
         end
-        walk.move(path[i])
+        walk.move(path[1])
         sprint(false)
+        table.remove(path, 1)
     end
 end
 
 walk.walkTo = function(to, steps, pathFinderConfig)
     steps = steps or 50
     pathFinderConfig = pathFinderConfig or {}
+    pathFinderConfig.blacklist_postions = pathFinderConfig.blacklist_postionss or {}
     local reverse = pathFinderConfig.reverse or false
 
+    local errors_count = 0
     while true do
         local player = getPlayer()
         local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
@@ -508,7 +515,18 @@ walk.walkTo = function(to, steps, pathFinderConfig)
         if path == nil then
             error('Walk: Cannot find a valid path to the objective')
         else
-            walk.followPath(path)
+            local status, err = pcall(walk.followPath, path)
+            if not status then
+                errors_count = errors_count + 1
+                if errors_count >= 3 then
+                    error(Str.errorResume(err))
+                elseif errors_count == 2 then
+                    local _pos = path[1]["pos"]
+                    pathFinderConfig.blacklist_postions[Calc.pointToStr(_pos)] = true
+                end
+            else
+                errors_count = 0
+            end
         end
     end
 end

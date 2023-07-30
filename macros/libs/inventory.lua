@@ -17,7 +17,7 @@ inventory.countItems = function(item_id)
     local inv = getInventory()
     for i = 1, #inv do
         local item = inv[i]
-        if item ~= false and item.id == item_id then
+        if item ~= false and Dictionary.getGroup(item.id) == item_id then
             count = count + item.nbt.Count
         end
     end
@@ -31,14 +31,14 @@ inventory.findItem = function(item_id, map)
     local items = {}
     for _, slot in pairs(map.main) do
         local item = inv.getSlot(slot)
-        if item and item.id == item_id then
+        if item and Dictionary.getGroup(item.id) == item_id then
             items[slot] = item
         end
     end
 
     for _, slot in pairs(map.hotbar) do
         local item = inv.getSlot(slot)
-        if item and item.id == item_id then
+        if item and Dictionary.getGroup(item.id) == item_id then
             items[slot] = item
         end
     end

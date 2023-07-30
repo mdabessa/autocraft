@@ -5,31 +5,152 @@ crafting.fuels = {
     ["minecraft:planks"] = true
 }
 
-crafting.getValidRecipe = function (recipe_id)
-    local recipes = getRecipes(recipe_id)
+crafting.denylist = {
+    "_wood",
+    "stripped_",
+}
+
+crafting.isDenylisted = function (item_id)
+    for _, word in pairs(crafting.denylist) do
+        if string.find(item_id, word) then
+            return true
+        end
+    end
+    return false
+end
+
+crafting.shape = function (obj)
+    if type(obj) ~= "table" then return nil end
+    if obj[1] == nil then return nil end
+
+    local len = #obj
+    local next = crafting.shape(obj[1])
+    if next == nil then
+        return {len}
+    end
+
+    local shape = {len}
+    for i=1, #next do
+        table.insert(shape, next[i])
+    end
+    return shape
+end
+
+crafting.getRecipes = function (item_id)
+    local _recipes = getRecipes(item_id)
+    if _recipes == nil then return nil end
     local notValid = {}
-    for i=1, #recipes['crafting'] do
-        for j=1, #recipes['crafting'][i] do
-            for k=1, #recipes['crafting'][i][j] do
-                local item = recipes['crafting'][i][j][k][1]
-                if item ~= nil and next(item) ~= nil then
-                    local _recipe = getRecipes(item.id)
-                    if _recipe['crafting'][1] == nil then goto inner_continue end
-                    local count = crafting.countRecipeItems(_recipe['crafting'][1])
-                    if count[recipe_id] ~= nil then
-                        table.insert(notValid, i)
-                        goto outter_continue
-                    end
+
+    for i=1, #_recipes['crafting'] do
+        local id = _recipes['crafting'][i]['out']['id']
+        if id ~= item_id then
+            table.insert(notValid, i)
+        end
+
+        -- normalize shape
+        -- collumns[ rows[ item_variation[ item ] ] ]
+        -- 3 x 3 x n or 2 x 2 x n
+        local shape = crafting.shape(_recipes['crafting'][i]['in'])
+        if #shape == 2 and shape[2] > 1 then
+            -- 1 x 1 with n variations
+            local new_recipe = {
+                {{}, {}},
+                {{}, {}}
+            }
+            new_recipe[1][1] = _recipes['crafting'][i]['in'][1]
+            _recipes['crafting'][i]['in'] = new_recipe
+
+        elseif #shape == 2 then
+            -- 2x2 with 1 variation
+            local new_recipe = {
+                {{}, {}},
+                {{}, {}}
+            }
+
+            for j=1, #_recipes['crafting'][i]['in'] do
+                for k=1, #_recipes['crafting'][i]['in'][j] do
+                    local item = _recipes['crafting'][i]['in'][j][k]
+                    new_recipe[j][k] = {item}
                 end
-                ::inner_continue::
+            end
+            _recipes['crafting'][i]['in'] = new_recipe
+
+        elseif #shape == 3 then
+            -- 2x2 or 3x3 with n variations
+
+            local new_recipe = {}
+            if shape[1] < 3 and shape[2] < 3 then
+                new_recipe = {
+                    {{}, {}},
+                    {{}, {}}
+                }
+            else
+                new_recipe = {
+                    {{}, {}, {}},
+                    {{}, {}, {}},
+                    {{}, {}, {}}
+                }
+            end
+
+            for j=1, #_recipes['crafting'][i]['in'] do
+                for k=1, #_recipes['crafting'][i]['in'][j] do
+                    local items = _recipes['crafting'][i]['in'][j][k]
+                    if items[1] == nil then items = {items} end
+                    new_recipe[j][k] = items
+                end
+            end
+            _recipes['crafting'][i]['in'] = new_recipe
+        else
+            table.insert(notValid, i)
+        end
+
+    end
+
+    for i=#notValid, 1, -1 do
+        table.remove(_recipes['crafting'], notValid[i])
+    end
+    return _recipes
+end
+
+crafting.getValidRecipes = function (recipe_id)
+    local ids = Dictionary.getGroupItems(recipe_id)
+    local all_recipes = {['crafting'] = {}}
+    for _, id in pairs(ids) do
+        local recipes = crafting.getRecipes(id)
+        if recipes == nil then goto continue end
+
+        for _, method in pairs(recipes) do
+            if method ~= "crafting" then
+                all_recipes[method] = recipes[method]
             end
         end
-        ::outter_continue::
+        -- validate crafting recipes
+        if #recipes['crafting'] == 0 then goto continue end
+        for _, recipe in pairs(recipes['crafting']) do
+            local valid = true
+            for _, row in pairs(recipe['in']) do
+                for _, items in pairs(row) do
+                    if #items > 0 then
+                        local item = items[1]
+                        local _recipe = crafting.getRecipes(item.id)
+                        if _recipe ~= nil and #_recipe['crafting'] > 0 then
+                            local count = crafting.countRecipeItems(_recipe['crafting'][1])
+                            if count[recipe_id] ~= nil then
+                                -- recursive recipe, skip
+                                valid = false
+                            end
+                        end
+                    end
+                end
+            end
+            if valid then
+                table.insert(all_recipes['crafting'], recipe)
+            end
+        end
+
+        :: continue ::
     end
-    for i = #notValid, 1, -1 do
-        table.remove(recipes['crafting'], notValid[i])
-    end
-    return recipes
+    return all_recipes
 end
 
 crafting.listFuels = function()
@@ -45,9 +166,9 @@ end
 
 crafting.countRecipeItems = function(recipe)
     local items = {}
-    for i = 1, #recipe do
-        for j = 1, #recipe[i] do
-            local item = recipe[i][j][1]
+    for i = 1, #recipe['in'] do
+        for j = 1, #recipe['in'][i] do
+            local item = recipe['in'][i][j][1]
             if item ~= nil and next(item) ~= nil then
                 if items[item.id] == nil then items[item.id] = 0 end
                 items[item.id] = items[item.id] + 1
@@ -57,13 +178,17 @@ crafting.countRecipeItems = function(recipe)
     return items
 end
 
-crafting.setRecipe = function(recipe, inv, map)
-    for i=1, #recipe do
-        for j=1, #recipe[i] do
-            local item = recipe[i][j][1]
-            if item ~= nil and next(item) ~= nil then
-                local slot = Inventory.findItem(item.id, map)
-                if slot == nil or next(slot) == nil then return false end
+crafting.setRecipe = function(recipe, map)
+    local inv = openInventory()
+    for i=1, #recipe['in'] do
+        for j=1, #recipe['in'][i] do
+            local items = recipe['in'][i][j]
+            local sucess = false
+            if #items == 0 then sucess = true end
+            for _, possible_item in pairs(items) do
+                local id = Dictionary.getGroup(possible_item.id)
+                local slot = Inventory.findItem(id, map)
+                if slot == nil or next(slot) == nil then goto continue end
                 slot, _ = next(slot)
                 inv.click(slot)
                 sleep(200)
@@ -71,46 +196,39 @@ crafting.setRecipe = function(recipe, inv, map)
                 if #map.craftingIn == 9 then dim = 3 end
                 local s = i + (j - 1) * dim
                 inv.click(map.craftingIn[s], inv.RMB)
+                sleep(200)
                 inv.click(slot)
+                sleep(200)
+                sucess = true
+                break
+                ::continue::
+            end
+            if not sucess then
+                inv.close()
+                return false
             end
         end
     end
-end
-
-crafting.listItems = function(recipe)
-    local items = {}
-    for i = 1, #recipe do
-        for j = 1, #recipe[i] do
-            local item = recipe[i][j][1]
-            if item ~= nil and next(item) ~= nil then
-                if items[item.id] == nil then items[item.id] = 0 end
-                items[item.id] = items[item.id] + 1
-            end
-        end
-    end
-    return items
+    return true
 end
 
 crafting.canCraftInHand = function(recipe)
-    if recipe[3] ~= nil then return false end
-
-    for i = 1, 2 do
-        if recipe[i] ~= nil and recipe[i][3] ~= nil then return false end
-    end
-
-    return true
+    local shape = crafting.shape(recipe['in'])
+    if shape == nil then return false end
+    return shape[1] == 2
 end
 
 crafting.handCraft = function(recipe)
     local inv = openInventory()
     local map = inv.mapping.inventory
-    crafting.setRecipe(recipe, inv, map)
-    sleep(200)
-
-    inv.quick(map.craftingOut)
-    sleep(200)
-
+    local s = crafting.setRecipe(recipe, map)
+    if s then
+        sleep(200)
+        inv.quick(map.craftingOut)
+        sleep(200)
+    end
     inv.close()
+    return s
 end
 
 crafting.craftingTable = function(recipe)
@@ -138,11 +256,10 @@ crafting.craftingTable = function(recipe)
     sleep(1000)
 
     map = inv.mapping['crafting table']
-    crafting.setRecipe(recipe, inv, map)
+    crafting.setRecipe(recipe, map)
     sleep(1000)
-
-    inv.quick(map.craftingOut)
-    sleep(2000)
+    inv.quick(map.craftOut)
+    sleep(1000)
     inv.close()
 end
 
@@ -205,50 +322,60 @@ end
 
 crafting.craft = function(item_id, quantity)
     if quantity == nil then quantity = 1 end
+    item_id = Dictionary.getGroup(item_id)
+    if crafting.isDenylisted(item_id) then error('Item is denylisted') end
 
     if Farm.collect[item_id] ~= nil then
         Farm.collect[item_id](quantity)
         return
     end
 
-    local recipes = crafting.getValidRecipe(item_id)
-    if #recipes['crafting'] > 0 then
-        local _recipe = recipes['crafting'][1]
-        Logger.log('crafting: ' .. item_id)
-        local items = crafting.listItems(_recipe)
-        while true do
-            local hasAllItems = true
-            for id, count in pairs(items) do
-                local itemsOnInventory = Inventory.countItems(id)
-                if itemsOnInventory > count then goto continue end
-                if itemsOnInventory < count then
-                    crafting.craft(id, count - itemsOnInventory)
-                    hasAllItems = false
+    local recipes = crafting.getValidRecipes(item_id)
+    if recipes['crafting'] ~= nil and #recipes['crafting'] > 0 then
+        for i, recipe in pairs(recipes['crafting']) do
+            Logger.log('crafting: ' .. item_id .. ' with recipe ' .. i)
+            local items = crafting.countRecipeItems(recipe)
+            while true do
+                local hasAllItems = true
+                for id, count in pairs(items) do
+                    id = Dictionary.getGroup(id)
+                    local itemsOnInventory = Inventory.countItems(id)
+                    if itemsOnInventory > count then goto continue end
+                    if itemsOnInventory < count then
+                        local status, err = pcall(crafting.craft, id, count - itemsOnInventory)
+                        if not status and err and
+                            (string.find(err, 'No recipe or gathering method found for') or
+                            string.find(err, 'Item is denylist')) then
+                            goto next_recipe
+                        end
+                        hasAllItems = false
+                    end
+                    ::continue::
                 end
-                ::continue::
+                if hasAllItems then break end
             end
-            if hasAllItems then break end
+
+            local itemsOnInventory = Inventory.countItems(item_id)
+            local goal = quantity + itemsOnInventory
+            if crafting.canCraftInHand(recipe) then
+                Logger.log('crafting in hand: ' .. item_id)
+                crafting.handCraft(recipe)
+            else
+                Logger.log('crafting in table: ' .. item_id)
+                crafting.craftingTable(recipe)
+            end
+
+            itemsOnInventory = Inventory.countItems(item_id)
+            Logger.log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
+            Logger.log('Created ' .. item_id)
+            if itemsOnInventory < goal then
+                crafting.craft(item_id, goal - itemsOnInventory)
+            end
+            do return end
+            :: next_recipe ::
         end
 
-        local itemsOnInventory = Inventory.countItems(item_id)
-        local goal = quantity + itemsOnInventory
-        if crafting.canCraftInHand(_recipe) then
-            Logger.log('crafting in hand: ' .. item_id)
-            crafting.handCraft(_recipe)
-        else
-            Logger.log('crafting in table: ' .. item_id)
-            crafting.craftingTable(_recipe)
-        end
-
-        itemsOnInventory = Inventory.countItems(item_id)
-        Logger.log('OnInventory: ' .. itemsOnInventory .. ' Goal: ' .. goal)
-        Logger.log('Created ' .. item_id)
-        if itemsOnInventory < goal then
-            crafting.craft(item_id, goal - itemsOnInventory)
-        end
-        return
-
-    elseif #recipes['furnace'] > 0 then
+    elseif recipes['furnace'] ~= nil and #recipes['furnace'] > 0 then
         local _recipe = recipes['furnace'][1]
         local items = {[_recipe[1].id] = 1}
         while true do
@@ -288,7 +415,7 @@ crafting.craft = function(item_id, quantity)
 end
 
 crafting.fastCraft = function (item_id)
-    local recipes = crafting.getValidRecipe(item_id)
+    local recipes = crafting.getValidRecipes(item_id)
     if #recipes['crafting'] == 0 then return false end
 
     local recipe = recipes['crafting'][1]
