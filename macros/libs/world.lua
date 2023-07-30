@@ -9,7 +9,7 @@ world.searchStructure = function(func, timeout, iterator, shape, step)
     local y = math.floor(player.pos[2])
     local z = math.floor(player.pos[3])
 
-    iterator = iterator or world.searchInRadius()
+    iterator = iterator or world.searchInRadius(shape, step)
     while true do
         if os.time() - start > timeout then return nil end
         local pos = iterator()
