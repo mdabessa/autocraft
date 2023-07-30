@@ -1,7 +1,7 @@
 Libs = require('libs/init')
 
 
-local function craft(item, qtd, timeout)
+local function craftTest(item, qtd, timeout)
     qtd = qtd or 1
 
     local results = {}
@@ -80,5 +80,54 @@ local function craft(item, qtd, timeout)
 end
 
 
-craft('minecraft:stone_sword', 30, 60*3)
+local function walkTest(max_tries)
+    local results = {}
+    for i=1, max_tries do
+        local result = {}
+        local start = os.time()
 
+        local pos = getPlayer().pos
+        local box = Calc.createBox({29999999, 60, pos[3]}, {10, 255, 10})
+        local status, err = pcall(function ()
+            Walk.walkTo(box, 50)
+        end)
+
+        if status then
+            result['error'] = nil
+            result['traceback'] = nil
+        else
+            result['error'] = Str.errorResume(err)
+            result['traceback'] = err
+        end
+        Logger.log(err)
+        result['status'] = status
+        result['startPos'] = pos
+        result['endPos'] = getPlayer().pos
+        result['timeTaken'] = os.time() - start
+        result['timeStart'] = start
+        result['timeEnd'] = os.time()
+
+        table.insert(results, result)
+        local path ='.\\tests\\infinite_walk.json'
+        Json.dump({['tests'] = results}, path)
+
+        if i < max_tries then
+            say('/clear')
+            sleep(200)
+            say('/gamemode creative')
+            sleep(200)
+            say('/tp 0 300 ' .. tostring(getPlayer().pos[3] + 10000))
+
+            sleep(5000)
+            while true do
+                local player = getPlayer()
+                if player.fallDist < 1 then break end
+            end
+
+            say('/gamemode survival')
+        end
+    end
+end
+
+-- craft('minecraft:stick', 30, 30)
+walkTest(10)
