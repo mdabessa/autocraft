@@ -335,7 +335,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
 
         local neighbors_ = walk.neighbors(current, maxJump, maxFall, canPlace, canBreak)
         for _, neighbor in pairs(neighbors_) do
-            if pathFinderConfig.blacklist_postions[Calc.pointToStr(neighbor['pos'])] ~= nil then goto continue end
+            if pathFinderConfig.denylist_positions[Calc.pointToStr(neighbor['pos'])] ~= nil then goto continue end
             if list_open_ref[Calc.pointToStr(neighbor['pos'])] == nil and
                 list_closed[Calc.pointToStr(neighbor['pos'])] == nil then
 
@@ -488,7 +488,7 @@ end
 walk.walkTo = function(to, steps, pathFinderConfig)
     steps = steps or 50
     pathFinderConfig = pathFinderConfig or {}
-    pathFinderConfig.blacklist_postions = pathFinderConfig.blacklist_postions or {}
+    pathFinderConfig.denylist_positions = pathFinderConfig.denylist_positions or {}
     local reverse = pathFinderConfig.reverse or false
 
     local errors_count = 0
@@ -522,7 +522,7 @@ walk.walkTo = function(to, steps, pathFinderConfig)
                     error(Str.errorResume(err))
                 elseif errors_count == 2 then
                     local _pos = path[1]["pos"]
-                    pathFinderConfig.blacklist_postions[Calc.pointToStr(_pos)] = true
+                    pathFinderConfig.denylist_positions[Calc.pointToStr(_pos)] = true
                 end
             else
                 errors_count = 0
