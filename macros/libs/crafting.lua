@@ -343,6 +343,11 @@ crafting.craft = function(item_id, quantity)
                     if itemsOnInventory > count then goto continue end
                     if itemsOnInventory < count then
                         local status, err = pcall(crafting.craft, id, count - itemsOnInventory)
+
+                        if not status and Str.errorResume(err) == "Script was stopped" then
+                            error("Script was stopped")
+                        end
+
                         if not status and err and
                             (string.find(err, 'No recipe or gathering method found for') or
                             string.find(err, 'Item is denylist')) then

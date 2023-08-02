@@ -16,13 +16,16 @@ miner.ORES_HARVEST_LEVEL = {
 }
 
 miner.getMinePoints = function ()
-    local s, points = pcall(Json.read, './miner.json')
+    local s, result = pcall(Json.read, './miner.json')
     if s == false then
+        if Str.errorResume(result) == "Script was stopped" then
+            error("Script was stopped")
+        end
         return {}
-    elseif points['points'] == nil then
+    elseif result['points'] == nil then
         return {}
     else
-        return points['points']
+        return result['points']
     end
 end
 

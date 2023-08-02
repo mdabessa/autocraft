@@ -517,6 +517,10 @@ walk.walkTo = function(to, steps, pathFinderConfig)
         else
             local status, err = pcall(walk.followPath, path)
             if not status then
+                if Str.errorResume(err) == "Script was stopped" then
+                    error("Script was stopped")
+                end
+
                 errors_count = errors_count + 1
                 if errors_count >= 3 then
                     error(Str.errorResume(err))
