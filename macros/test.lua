@@ -82,11 +82,36 @@ end
 
 local function walkTest(max_tries)
     local results = {}
+
+    -- Display HUD
+    Hud.clear()
+    local title_hud, _ = Hud.addText('Walk Test', 2, 2)
+    title_hud.setTextSize(7)
+
+    local pos_hud = Hud.addText('Pos: ', 2, 11)
+    pos_hud.setTextSize(7)
+
+    local last_dist_hud = Hud.addText('Last test distance: ', 2, 29)
+    last_dist_hud.setTextSize(7)
+
+    Hud.enable()
+
+    local th = thread.new(function ()
+        while true do
+            local pos = getPlayer().pos
+            pos_hud.setText('Pos: ' .. tostring(pos[1]) .. ' ' .. tostring(pos[2]) .. ' ' .. tostring(pos[3]))
+            sleep(100)
+        end
+    end)
+
+    th:start()
+
     for i=1, max_tries do
         local result = {}
         local start = os.time()
 
         local pos = getPlayer().pos
+
         local box = Calc.createBox({29999999, 60, pos[3]}, {10, 255, 10})
         local status, err = pcall(function ()
             Walk.walkTo(box, 50)
@@ -106,6 +131,9 @@ local function walkTest(max_tries)
         result['timeTaken'] = os.time() - start
         result['timeStart'] = start
         result['timeEnd'] = os.time()
+
+        local dist = Calc.distance3d(result['startPos'], result['endPos'])
+        last_dist_hud.setText('Last test distance: ' .. tostring(dist))
 
         table.insert(results, result)
         local path ='.\\tests\\infinite_walk.json'
@@ -127,6 +155,9 @@ local function walkTest(max_tries)
             say('/gamemode survival')
         end
     end
+
+    th:stop()
+    Hud.clear()
 end
 
 -- craft('minecraft:stick', 30, 30)

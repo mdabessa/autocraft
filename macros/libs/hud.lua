@@ -29,9 +29,7 @@ hud.disable = function()
 end
 
 hud.clear = function()
-    for _, text in pairs(hud.texts) do
-        text.disableDraw()
-    end
+    hud2D.clearAll()
     hud.texts = {}
 end
 
