@@ -1,8 +1,13 @@
 Libs = require('libs/init')
 
+local test = {}
 
-local function craftTest(item, qtd, timeout)
+
+test.craftTest = function(item, qtd, timeout)
     qtd = qtd or 1
+    timeout = timeout or (60*5)
+    qtd = tonumber(qtd)
+    timeout = tonumber(timeout)
 
     local results = {}
 
@@ -80,7 +85,10 @@ local function craftTest(item, qtd, timeout)
 end
 
 
-local function walkTest(max_tries)
+test.walkTest = function(max_tries)
+    max_tries = max_tries or 1
+    max_tries = tonumber(max_tries)
+
     local results = {}
 
     -- Display HUD
@@ -160,5 +168,4 @@ local function walkTest(max_tries)
     Hud.clear()
 end
 
--- craft('minecraft:stick', 30, 30)
-walkTest(10)
+return test

@@ -260,4 +260,20 @@ command.commands.give = function (args)
     drop(true)
 end
 
+command.commands.test = function (args)
+    args = command.parseArguments(args)
+    local test = args[1] or args['test']
+    local test_args = {}
+    for i = 2, #args do table.insert(test_args, args[i]) end
+    if test == nil then
+        error('Please specify a test')
+    end
+
+    if Test[test] == nil then
+        error('Test not found')
+    end
+
+    Test[test](table.unpack(test_args))
+end
+
 return command
