@@ -34,6 +34,7 @@ The prefix for all commands is `!`.
 - **!drop:** Drop an item from the inventory.
 - **!give:** Give an item to an entity (player or mob) in the world (same as -> !craft -> !goto -> !drop).
 - **!stop:** Stop all commands.
+- **!test:** Test the bot with a test script (useful to debug and generate data for analysis).
 
 
 ## GOAP
@@ -70,7 +71,6 @@ The scripts are triggered by the mod Advanced Macros.
 - **loop.lua:** Listen for polling commands from external command queue (postgreSQL database).
 - **main.lua:** Main script that is executed when the bot enters the world.
 - **stop.lua:** Force stop all scripts and commands.
-- **test.lua:** Test script to test and generate data for analysis of the bot, such as the time to craft an item, the time to walk to a location, the success rate of the bot to craft an item, etc.
 
 If it doesn't have a postgreSQL database configured, the bot will work normally, but without the ability to receive commands and send events to external applications.
 
