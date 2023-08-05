@@ -9,6 +9,7 @@ test.craftTest = function(item, qtd, timeout)
     qtd = tonumber(qtd)
     timeout = tonumber(timeout)
 
+    local filename = Str.generateFileName() .. '.json'
     local results = {}
 
     for i=1, qtd do
@@ -78,9 +79,14 @@ test.craftTest = function(item, qtd, timeout)
         table.insert(results, result)
         Logger.callback = nil
 
-        local item_name = Str.split(item, ':')[2]
-        local path ='.\\tests\\' .. item_name .. '.json'
-        Json.dump({['tests'] = results}, path)
+        local path ='.\\tests\\' .. filename
+        Json.dump({
+            ['tests'] = results,
+            ['type'] = 'craft',
+            ['item'] = item,
+            ['qtd'] = qtd,
+            ['timeout'] = timeout
+        }, path)
     end
 end
 
@@ -89,6 +95,7 @@ test.walkTest = function(max_tries)
     max_tries = max_tries or 1
     max_tries = tonumber(max_tries)
 
+    local filename = Str.generateFileName() .. '.json'
     local results = {}
 
     -- Display HUD
@@ -144,8 +151,12 @@ test.walkTest = function(max_tries)
         last_dist_hud.setText('Last test distance: ' .. tostring(dist))
 
         table.insert(results, result)
-        local path ='.\\tests\\infinite_walk.json'
-        Json.dump({['tests'] = results}, path)
+        local path ='.\\tests\\' .. filename
+        Json.dump({
+            ['tests'] = results,
+            ['type'] = 'walk',
+            ['max_tries'] = max_tries
+        }, path)
 
         if i < max_tries then
             say('/clear')

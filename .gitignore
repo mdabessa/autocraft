@@ -4,7 +4,5 @@
 .vscode
 *.sqlite3
 settings.txt
-macros/libs/utils/test.json
-macros/libs/utils/miner.json
 macros/miner.json
-macros/tests/infinite_walk.json
+macros/tests/*.json

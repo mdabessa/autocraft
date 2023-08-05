@@ -37,4 +37,9 @@ str.join = function(t, sep, start, finish)
     return res
 end
 
+str.generateFileName = function()
+    local date = os.date("%Y-%m-%d_%H-%M-%S")
+    return date
+end
+
 return str
