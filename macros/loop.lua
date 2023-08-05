@@ -12,7 +12,7 @@ end
 
 local last = nil
 while true do
-    Command.thread_cleanup()
+    Command.clearThreads()
     local command = Database.get_command()
     if #command > 0 then
         if #Command.threads > 0 then

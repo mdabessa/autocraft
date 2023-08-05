@@ -6,7 +6,7 @@ command.alias = {
     ["goto"] = "goTo",
 }
 
-command.thread_cleanup = function()
+command.clearThreads = function()
     for i = 1, #command.threads do
         if command.threads[i].getStatus() == 'done' then
             table.remove(command.threads, i)
@@ -14,7 +14,7 @@ command.thread_cleanup = function()
     end
 end
 
-command.reset_player = function ()
+command.resetPlayer = function ()
     local inv = openInventory()
     inv.close()
 end
@@ -45,7 +45,7 @@ command.execute = function(str, callback)
     end
 
     if command.commands[cmd] ~= nil then
-        command.reset_player()
+        command.resetPlayer()
         local cmd_thread = thread.new( function ()
             local status, err = pcall(command.commands[cmd], args)
             if callback ~= nil then
