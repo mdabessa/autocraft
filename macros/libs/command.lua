@@ -6,6 +6,23 @@ command.alias = {
     ["goto"] = "goTo",
 }
 
+command.parseArguments = function (args)
+    local result = {}
+    local content = Str.split(args, ' ')
+    local i = 1
+    while i <= #content do
+        local arg = content[i]
+        local key, value = string.match(arg, "(%w+)=(%w+)")
+        if key ~= nil and value ~= nil then
+            result[key] = value
+        else
+            table.insert(result, arg)
+        end
+        i = i + 1
+    end
+    return result
+end
+
 command.clearThreads = function()
     for i = 1, #command.threads do
         if command.threads[i].getStatus() == 'done' then
@@ -71,8 +88,8 @@ command.commands.help = function (args)
 end
 
 command.commands.follow = function (args)
-    args = Str.split(args, ' ')
-    local entity_name = args[1]
+    args = command.parseArguments(args)
+    local entity_name = args[1] or args['entity']
     if entity_name == nil then
         error('Please specify an entity to follow')
         return
@@ -98,7 +115,7 @@ command.commands.follow = function (args)
 end
 
 command.commands.goTo = function (args)
-    args = Str.split(args, ' ')
+    args = command.parseArguments(args)
     if #args == 3 then
         local x = tonumber(args[1])
         local y = tonumber(args[2])
@@ -142,7 +159,9 @@ command.commands.say = function (args)
 end
 
 command.commands.craft = function (args)
-    local item = args
+    args = command.parseArguments(args)
+    local item = args[1] or args['item']
+    local amount = args[2] or args['amount'] or 1
     if item == nil then
         error('Please specify an item')
         return
@@ -152,11 +171,12 @@ command.commands.craft = function (args)
         error('A minecraft id must be specified')
     end
 
-    Crafting.craft(item, 1)
+    Crafting.craft(item, amount)
 end
 
 command.commands.drop = function (args)
-    local item = args
+    args = command.parseArguments(args)
+    local item = args[1] or args['item']
     if item == nil then
         error('Please specify an item')
         return
@@ -183,10 +203,10 @@ command.commands.drop = function (args)
 end
 
 command.commands.give = function (args)
-    local item_name = nil
-    local entity_name = nil
+    args = command.parseArguments(args)
+    local item_name = args[1] or args['item']
+    local entity_name = args[2] or args['entity']
 
-    args = Str.split(args, ' ')
     if #args ~= 2 then
         error('Please specify an item and an entity')
         return
