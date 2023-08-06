@@ -1,6 +1,11 @@
-local database = os.getenv('PG_DATABASE') or 'postgres'
-local user = os.getenv('PG_USER') or 'postgres'
-local password = os.getenv('PG_PASSWORD') or 'postgres'
+local database = os.getenv('PG_DATABASE')
+local user = os.getenv('PG_USER')
+local password = os.getenv('PG_PASSWORD')
+
+if not database or not user or not password then
+    Logger.log("Database not configured!")
+    return nil
+end
 
 local db = {
     DriverManager = luajava.bindClass("java.sql.DriverManager"),

@@ -1,5 +1,10 @@
 Libs = require('libs/init')
 
+if Database == nil then
+    Logger.log("This script requires a database connection. Please configure it in the libs/db.lua file.")
+    return
+end
+
 local callback = function(status, err)
     if status == false and
         err ~= nil and

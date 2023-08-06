@@ -26,6 +26,8 @@ end
 if events[args[2]] then
     local message = events[args[2]](args)
     Logger.log(message)
-    Database.add_event(message)
+    if Database ~= nil then
+        Database.add_event(message)
+    end
 end
 
