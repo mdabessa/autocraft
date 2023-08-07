@@ -24,7 +24,7 @@ function include(filename)
     filename = script_path() .. '\\' .. filename .. '.lua'
     local success, result = xpcall(evalfile, errorhandler, filename)
     if not success then
-        print("[ERROR]\n",result,"[/ERROR]\n")
+        log("[ERROR]\n",result,"[/ERROR]\n")
     end
     return result
 end
