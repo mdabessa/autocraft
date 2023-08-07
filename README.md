@@ -10,11 +10,10 @@ AutoCraft uses a GOAP (Goal Oriented Action Planning) algorithm and a pathfindin
 3. In-game, configure the scripts in the listening events:
     - `chat.lua` event: `ChatFilter` Required to execute commands.
     - `main.lua` event: `JoinWorld` Only needed when the bot works completely autonomously without using commands or external applications.
-    - `event_chat.lua` event: `ChatFilter` Only needed when using external applications, to send chat events to the database.
-    - `event_anything.lua` event: `Anything` Only needed when using external applications, to send events to the database.
-    - `loop.lua` event: `JoinWorld` Only needed when using external applications, to listen for commands from the database.
-4. If you want to use external applications, configure the database in the `lib/db.lua` file.
-5. If using external applications needs to download in the mods folder the [JDBC Driver](https://jdbc.postgresql.org/download/).
+    - `event_chat.lua` event: `ChatFilter` Only needed when using external applications, to send chat events to a list in the bot state.
+    - `event_anything.lua` event: `Anything` Only needed when using external applications, to send events to a list in the bot state.
+    - `loop.lua` event: `JoinWorld` Only needed when using external applications, to listen for commands from a list in the bot state.
+4. If you want to use external applications, your application needs to acess the `macros\state.json` file to get the bot state, the events queue, and the commands queue. The `state.json` file is updated automatically by the bot.
 
 ## Features
 - **Pathfinding:** Walk to any location, swimming, breaking blocks, and placing blocks as needed.
@@ -66,30 +65,16 @@ The scripts are triggered by the mod Advanced Macros.
 - **block_info.lua:** Get information about the block that the bot is looking at (useful to debug).
 - **chat.lua:** Listen for execute commands (commands only work if this script is running in the `ChatFilter` event from Advanced Macros).
 - **entity.lua:** List all entities in the world (useful to debug).
-- **event_anything.lua:** Listen for any event and send it to external event queue (postgreSQL database).
-- **event_chat.lua:** Listen for chat messages, execute commands, and send messages to external event queue (postgreSQL database).
-- **loop.lua:** Listen for polling commands from external command queue (postgreSQL database).
+- **event_anything.lua:** Listen for any event and send it to external event queue.
+- **event_chat.lua:** Listen for chat messages, execute commands, and send messages to external event queue.
+- **loop.lua:** Listen for polling commands from external command queue.
 - **main.lua:** Main script that is executed when the bot enters the world.
 - **stop.lua:** Force stop all scripts and commands.
 
-If it doesn't have a postgreSQL database configured, the bot will work normally, but without the ability to receive commands and send events to external applications.
+If you don't want to use external applications, you don't need to use the `event_anything.lua`, `event_chat.lua`, and `loop.lua` scripts.
 
 ## External applications
-The bot can be controlled by external applications using a postgreSQL database, sending events to the database and receiving commands from the database. The database needs to have the following tables:
-
-- **commands:** Table to send commands to the bot.
-    - id(integer): Unique identifier of the command.
-    - command(string): Command to be executed by the bot.
-    - priority(integer): Priority of the command.
-    - created_at(timestamp): Timestamp of when the command was created.
-</br></br>
-- **events:** Table to receive events from the bot.
-    - id(integer): Unique identifier of the event.
-    - event(string): Event sent by the bot.
-    - type(string): Type of the event (chat, command response, etc).
-    - user(string): User that sent the event.
-    - created_at(timestamp): Timestamp of when the event was created.
-
+The bot can be controlled by external applications. The bot has a state that is stored in the `macros\state.json` file. The state contains basic information about the bot, the events queue, and the commands queue.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

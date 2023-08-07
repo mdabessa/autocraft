@@ -7,3 +7,4 @@
 settings.txt
 macros/miner.json
 macros/tests/*.json
+macros/state.json

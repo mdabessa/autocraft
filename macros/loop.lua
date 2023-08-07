@@ -1,9 +1,5 @@
 Libs = require('libs/init')
 
-if Database == nil then
-    Logger.log("This script requires a database connection. Please configure it in the libs/db.lua file.")
-    return
-end
 
 local callback = function(status, err)
     if status == false and
@@ -11,31 +7,43 @@ local callback = function(status, err)
         err ~= 'Script was stopped'
     then
         local msg = Str.errorResume(err)
-        Database.add_event(msg)
+        local events = State.get('events')
+        if events == nil then events = {} end
+
+        table.insert(events, {
+            user = 'Minecraft',
+            message = msg,
+            time = os.time(),
+            type = 'error'
+        })
+
+        State.set('events', events)
     end
 end
 
 local last = nil
 while true do
     Command.clearThreads()
-    local command = Database.get_command()
-    if #command > 0 then
+    local commands = State.get('commands')
+    if commands and #commands > 0 then
         if #Command.threads > 0 then
             local priority = 4
             if last ~= nil then
                 priority = last
             end
 
-            if tonumber(command[1].priority) < priority then
-                Command.execute(command[1].command, callback)
-                last = tonumber(command[1].priority)
-                Database.delete_command(command[1].id)
+            if tonumber(commands[1].priority) < priority then
+                Command.execute(commands[1].command, callback)
+                last = tonumber(commands[1].priority)
+                table.remove(commands, 1)
             end
         else
-            Command.execute(command[1].command, callback)
-            last = tonumber(command[1].priority)
-            Database.delete_command(command[1].id)
+            Command.execute(commands[1].command, callback)
+            last = tonumber(commands[1].priority)
+            table.remove(commands, 1)
         end
     end
+
+    State.set('commands', commands)
     sleep(500)
 end
