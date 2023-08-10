@@ -492,6 +492,7 @@ walk.walkTo = function(to, steps, pathFinderConfig)
     local reverse = pathFinderConfig.reverse or false
 
     local errors_count = 0
+    local error_pos = nil
     while true do
         local player = getPlayer()
         local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
@@ -521,11 +522,17 @@ walk.walkTo = function(to, steps, pathFinderConfig)
                     error("Script was stopped")
                 end
 
-                errors_count = errors_count + 1
+                local _pos = path[1]["pos"]
+                if error_pos ~= nil and Calc.distance3d(error_pos, pos) < 2 then
+                    errors_count = errors_count + 1
+                else
+                    error_pos = pos
+                    errors_count = 1
+                end
+
                 if errors_count >= 3 then
                     error(Str.errorResume(err))
-                elseif errors_count == 2 then
-                    local _pos = path[1]["pos"]
+                elseif errors_count == 1 then
                     pathFinderConfig.denylist_positions[Calc.pointToStr(_pos)] = true
                 end
             else
