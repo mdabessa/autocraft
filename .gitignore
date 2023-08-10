@@ -6,5 +6,5 @@
 *.sqlite3
 settings.txt
 macros/miner.json
-macros/tests/*.json
+macros/tests/*
 macros/state.json
