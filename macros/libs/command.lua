@@ -116,13 +116,20 @@ end
 
 command.commands.goTo = function (args)
     args = command.parseArguments(args)
+
+    local canPlace = args['canPlace'] or false
+    if canPlace == 'true' then canPlace = true end
+
+    local canBreak = args['canBreak'] or false
+    if canBreak == 'true' then canBreak = true end
+
     if #args == 3 then
         local x = tonumber(args[1])
         local y = tonumber(args[2])
         local z = tonumber(args[3])
 
         local box = Calc.createBox({x, y, z}, 1)
-        local s = Walk.walkTo(box, 50)
+        local s = Walk.walkTo(box, 50, {canPlace = canPlace, canBreak = canBreak})
         if s == false then
             error('Could not reach destination')
         end
@@ -144,7 +151,7 @@ command.commands.goTo = function (args)
 
         local entity_id = entity.id
 
-        Walk.followEntity(entity_id, 2, false)
+        Walk.followEntity(entity_id, 2, false, {canPlace = canPlace, canBreak = canBreak})
 
         entity = getEntity(entity_id)
         lookAt(entity.pos[1], entity.pos[2]+entity.width-0.2, entity.pos[3])
