@@ -145,6 +145,7 @@ function json.parse(str, pos, end_delim)
 end
 
 function json.read(file)
+  file = '..\\..\\' .. file -- Relative to the macro directory
   local f = io.open(file, 'r')
   if f == nil then error('File not found: ' .. file) end
   local content = f:read('*all')
