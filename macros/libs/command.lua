@@ -283,4 +283,94 @@ command.commands.test = function (args)
     Test[test](table.unpack(test_args))
 end
 
+command.commands.waypoint = function (args)
+    args = command.parseArguments(args)
+    local subcommand = args[1]
+    local name = args[2] or args['name']
+
+    if subcommand == nil then
+        error('Please specify a subcommand')
+    end
+
+    if subcommand == 'list' then
+        local waypoints = State.get('waypoints')
+        if waypoints == nil or next(waypoints) == nil then
+            log('No waypoints found')
+            return
+        end
+        log('Waypoints:')
+        for k, v in pairs(waypoints) do
+            local pos = v.pos
+            log(k .. ': ' .. tostring(pos[1]) .. ', ' .. tostring(pos[2]) .. ', ' .. tostring(pos[3]) .. ' (' .. v.dimension .. ')')
+        end
+
+    elseif subcommand == 'add' then
+        if name == nil then
+            error('Please specify a name')
+        end
+
+        local player = getPlayer()
+        local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
+        local dimension = player.dimension.name
+
+        local waypoints = State.get('waypoints') or {}
+        waypoints[name] = {pos = pos, dimension = dimension}
+        State.set('waypoints', waypoints)
+        log('Waypoint added')
+
+    elseif subcommand == 'remove' then
+        if name == nil then
+            error('Please specify a name')
+        end
+
+        local waypoints = State.get('waypoints') or {}
+        if waypoints[name] == nil then
+            error('Waypoint not found')
+        end
+
+        waypoints[name] = nil
+        State.set('waypoints', waypoints)
+        log('Waypoint removed')
+
+    elseif subcommand == 'get' then
+        if name == nil then
+            error('Please specify a name')
+        end
+
+        local waypoints = State.get('waypoints') or {}
+        if waypoints[name] == nil then
+            error('Waypoint not found')
+        end
+
+        local waypoint = waypoints[name]
+        local pos = waypoint.pos
+        local dimension = waypoint.dimension
+
+        log('Waypoint: ' .. name .. ': ' .. tostring(pos[1]) .. ', ' .. tostring(pos[2]) .. ', ' .. tostring(pos[3]) .. ' (' .. dimension .. ')')
+
+    elseif subcommand == 'goto' then
+        if name == nil then
+            error('Please specify a name')
+        end
+
+        local waypoints = State.get('waypoints') or {}
+        if waypoints[name] == nil then
+            error('Waypoint not found')
+        end
+
+        local waypoint = waypoints[name]
+        local pos = waypoint.pos
+        local dimension = waypoint.dimension
+
+        local player = getPlayer()
+        if player.dimension.name ~= dimension then
+            error('Waypoint is in another dimension')
+        end
+
+        command.execute('goto ' .. tostring(pos[1]) .. ' ' .. tostring(pos[2]) .. ' ' .. tostring(pos[3]))
+    else
+        error('Invalid subcommand')
+    end
+end
+
 return command
