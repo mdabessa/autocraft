@@ -38,7 +38,7 @@ end
 
 command.execute = function(str, callback)
     local content = Str.split(str, ' ')
-    if #content == 0 then return nil end
+    if #content == 0 then return false end
     local cmd = string.lower(content[1])
     local args = ''
 
@@ -54,7 +54,8 @@ command.execute = function(str, callback)
             command.threads[i]:stop()
         end
         command.threads = {}
-        return nil
+        log('Stopped all threads/commands')
+        return true
     end
 
     if command.alias[cmd] ~= nil then
@@ -74,6 +75,8 @@ command.execute = function(str, callback)
 
         table.insert(command.threads, cmd_thread)
         return cmd_thread
+    else
+        error('Command not found')
     end
 end
 
@@ -92,7 +95,6 @@ command.commands.follow = function (args)
     local entity_name = args[1] or args['entity']
     if entity_name == nil then
         error('Please specify an entity to follow')
-        return
     end
 
     local entities = getEntityList()
@@ -110,7 +112,7 @@ command.commands.follow = function (args)
     end
 
     local entity_id = entity.id
-
+    log('Following ' .. entity.name)
     Walk.followEntity(entity_id, 2, true)
 end
 
@@ -129,6 +131,7 @@ command.commands.goTo = function (args)
         local z = tonumber(args[3])
 
         local box = Calc.createBox({x, y, z}, 1)
+        log('Going to ' .. tostring(x) .. ', ' .. tostring(y) .. ', ' .. tostring(z))
         local s = Walk.walkTo(box, 50, {canPlace = canPlace, canBreak = canBreak})
         if s == false then
             error('Could not reach destination')
@@ -151,6 +154,7 @@ command.commands.goTo = function (args)
 
         local entity_id = entity.id
 
+        log('Going to ' .. entity.name)
         Walk.followEntity(entity_id, 2, false, {canPlace = canPlace, canBreak = canBreak})
 
         entity = getEntity(entity_id)
@@ -178,6 +182,7 @@ command.commands.craft = function (args)
         error('A minecraft id must be specified')
     end
 
+    log('Crafting ' .. item .. ' x' .. tostring(amount))
     Crafting.craft(item, amount)
 end
 
@@ -199,7 +204,10 @@ command.commands.drop = function (args)
         error('Item not found in inventory')
         return
     end
-    local slot, _ = next(item)
+
+    local slot, _item = next(item)
+    log('Dropping ' .. _item.name .. ' x' .. tostring(_item.amount))
+
     local hotslot = Inventory.getHotbarSlot('placeable')
     local inventory = openInventory()
     local map = inventory.mapping.inventory
@@ -244,6 +252,7 @@ command.commands.give = function (args)
     local entity_id = entity.id
     local item = Inventory.findItem(item_name)
     if next(item) == nil then
+        log('Crafting ' .. item_name .. ' x1')
         Crafting.craft(item_name, 1)
         item = Inventory.findItem(item_name)
         if next(item) == nil then
@@ -252,11 +261,13 @@ command.commands.give = function (args)
         end
     end
 
+    log('Going to ' .. entity.name)
     Walk.followEntity(entity_id, 2, false)
     entity = getEntity(entity_id)
     lookAt(entity.pos[1], entity.pos[2]+entity.width, entity.pos[3])
     sleep(300)
 
+    log('Giving ' .. item_name .. ' x' .. tostring(item.amount) .. ' to ' .. entity.name)
     local slot, _ = next(item)
     local hotslot = Inventory.getHotbarSlot('placeable')
     local inventory = openInventory()
@@ -280,6 +291,7 @@ command.commands.test = function (args)
         error('Test not found')
     end
 
+    log('Running test ' .. test .. '...')
     Test[test](table.unpack(test_args))
 end
 

@@ -16,7 +16,7 @@ for i = 2, #chat do
 end
 
 local s = false
-if content:sub(1, 1) == '.' then
+if content:sub(1, 1) == '!' then
     content = content:sub(2, -1)
     s = Command.execute(content, callback)
 end
