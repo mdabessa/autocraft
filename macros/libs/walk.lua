@@ -429,41 +429,39 @@ walk.move = function(node)
         end
 
         player = getPlayer()
-        local from = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
-        if Calc.compareArray(from, to) then
-            return
-        end
+        local from = {player.pos[1], player.pos[2], player.pos[3]}
+        if Calc.distance3d(from, to) < 1 then return end
 
         local block = getBlock(from[1], from[2], from[3])
         if block ~= nil and block.id == 'minecraft:water' then
             key("SPACE", 1)
         end
 
-        if to[2] > player.pos[2] then jump(1) end
+        if to[2] - player.pos[2] > 0.5 then jump(1) end
 
         local yaw = math.atan2((to[3]+0.5) - player.pos[3], (to[1]+0.5) - player.pos[1]) * 180 / math.pi - 90
         local old_yaw = player.yaw
 
-        local step = (yaw - old_yaw)/20
+        local step = (yaw - old_yaw)
         local next = old_yaw + step
-        if yaw - next < 1 then next = yaw end
 
-        local diff = yaw - next
-
-        if not Calc.compareArray({from[1], from[3]}, {to[1], to[3]}) then
+        if not Calc.compareArray({from[1], from[3]}, {to[1], to[3]}) and
+            math.abs(step) > 0.1 then
             look(next, 0)
         end
 
-        if (diff  < 90 and diff > -90) then
-            forward(1)
-        else
-            back(1)
-        end
+        local diff = yaw - next
 
-        if (diff > 45 and diff < 135)then
-            right(1)
-        elseif (diff < -45 and diff > -135)then
-            left(1)
+        if (diff  < 90 and diff > -90) then
+            forward(10)
+        -- else
+        --     back(10)
+        -- end
+
+        -- if (diff > 45 and diff < 135)then
+        --     right(10)
+        -- elseif (diff < -45 and diff > -135)then
+        --     left(10)
         end
     end
 end
@@ -531,7 +529,7 @@ walk.walkTo = function(to, steps, pathFinderConfig)
                 end
 
                 if errors_count >= 3 then
-                    error(Str.errorResume(err))
+                    error(err)
                 elseif errors_count == 1 then
                     pathFinderConfig.denylist_positions[Calc.pointToStr(_pos)] = true
                 end
