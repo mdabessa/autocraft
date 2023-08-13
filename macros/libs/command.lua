@@ -2,6 +2,10 @@ local command = {}
 
 command.threads = {}
 
+command.addThread = function (thread)
+    table.insert(command.threads, thread)
+end
+
 command.alias = {
     ["goto"] = "goTo",
 }
@@ -73,7 +77,7 @@ command.execute = function(str, callback)
 
         cmd_thread:start()
 
-        table.insert(command.threads, cmd_thread)
+        command.addThread(cmd_thread)
         return cmd_thread
     else
         error('Command not found')
