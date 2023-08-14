@@ -384,6 +384,27 @@ command.commands.waypoint = function (args)
         end
 
         command.commands.goTo(tostring(pos[1]) .. ' ' .. tostring(pos[2]) .. ' ' .. tostring(pos[3]))
+    
+    elseif subcommand == 'tp' then
+        if name == nil then
+            error('Please specify a name')
+        end
+
+        local waypoints = State.get('waypoints') or {}
+        if waypoints[name] == nil then
+            error('Waypoint not found')
+        end
+
+        local waypoint = waypoints[name]
+        local pos = waypoint.pos
+        local dimension = waypoint.dimension
+
+        local player = getPlayer()
+        if player.dimension.name ~= dimension then
+            error('Waypoint is in another dimension')
+        else
+            say('/tp ' .. tostring(pos[1]) .. ' ' .. tostring(pos[2]) .. ' ' .. tostring(pos[3]))
+        end
     else
         error('Invalid subcommand')
     end
