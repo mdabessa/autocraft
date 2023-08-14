@@ -383,7 +383,7 @@ command.commands.waypoint = function (args)
             error('Waypoint is in another dimension')
         end
 
-        command.execute('goto ' .. tostring(pos[1]) .. ' ' .. tostring(pos[2]) .. ' ' .. tostring(pos[3]))
+        command.commands.goTo(tostring(pos[1]) .. ' ' .. tostring(pos[2]) .. ' ' .. tostring(pos[3]))
     else
         error('Invalid subcommand')
     end
