@@ -7,13 +7,13 @@ events.Death = function (arg)
     return "You died"
 end
 
-events.PlayerJoin = function (arg)
-    return "The player " .. arg[3] .. " joined the game"
-end
+-- events.PlayerJoin = function (arg)
+--     return "The player " .. arg[3] .. " joined the game"
+-- end
 
-events.PlayerLeave = function (arg)
-    return "The player " .. arg[3] .. " left the game"
-end
+-- events.PlayerLeave = function (arg)
+--     return "The player " .. arg[3] .. " left the game"
+-- end
 
 events.Weather = function (arg)
     return "The weather changed to " .. arg[3]
