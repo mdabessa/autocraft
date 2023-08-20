@@ -271,7 +271,7 @@ walk.heuristic = function(point1, point2)
     return Calc.distance3d(point1, point2)
 end
 
-walk.pathFinder = function(objective, pathFinderConfig)
+walk.pathFinder = function(from, objective, pathFinderConfig)
     pathFinderConfig = pathFinderConfig or {}
     local maxJump = pathFinderConfig.maxJump or 1
     local maxFall = pathFinderConfig.maxFall or 5
@@ -285,7 +285,7 @@ walk.pathFinder = function(objective, pathFinderConfig)
 
     local start = os.time()
 
-    local pos = getPlayer().pos
+    local pos = from or getPlayer().pos
     local start_pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
     local end_pos = Calc.centerBox(objective)
 
@@ -489,39 +489,65 @@ walk.walkTo = function(to, steps, pathFinderConfig)
     pathFinderConfig.denylist_positions = pathFinderConfig.denylist_positions or {}
     local reverse = pathFinderConfig.reverse or false
 
+    local path = nil
+    local threadPath = nil
     local errors_count = 0
     local error_pos = nil
     while true do
-        local player = getPlayer()
-        local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
-        local box = to
-        local center = Calc.centerBox(to)
-        center[2] = pos[2]
-        local dist = Calc.distance3d(player.pos, center)
+        local endPos = Table.copy(to)
+        local startPos = nil
 
-        if Calc.inBox(pos, box) and not reverse then return true end
-        if not Calc.inBox(pos, box) and reverse then return true end
-
-        if dist > steps and not reverse then
-            local angle = Calc.direction(pos, center)
-            local new_point = Calc.directionToPoint(pos, angle, steps)
-            box = Calc.createBox(new_point, 10)
-            box[1][2] = 0
-            box[2][2] = 255
+        if path == nil then
+            startPos = getPlayer().pos
+            startPos = {math.floor(startPos[1]), math.floor(startPos[2]), math.floor(startPos[3])}
+        else
+            startPos = path[#path]['pos']
         end
 
-        local path = walk.pathFinder(box, pathFinderConfig)
+        local center = Calc.centerBox(endPos)
+        center[2] = startPos[2]
+        local dist = Calc.distance3d(startPos, center)
+
+        if dist > steps and not reverse then
+            local angle = Calc.direction(startPos, center)
+            local new_point = Calc.directionToPoint(startPos, angle, steps)
+            endPos = Calc.createBox(new_point, 10)
+            endPos[1][2] = 0
+            endPos[2][2] = 255
+        end
+
+        path = walk.pathFinder(startPos, endPos, pathFinderConfig)
         if path == nil then
-            error('Walk: Cannot find a valid path to the objective')
-        else
-            local status, err = pcall(walk.followPath, path)
+            if threadPath ~= nil then threadPath:stop() end
+            error("Path not found")
+        end
+
+        if threadPath ~= nil then
+            while true do
+                if threadPath:getStatus() ~= 'running' then break end
+                sleep(100)
+            end
+        end
+
+        if #path == 0 then
+            return true
+        end
+
+        if path == nil then goto continue end
+
+        threadPath = thread.new(function ()
+            if #path == 0 then return end
+            local status, err = pcall(walk.followPath, Table.copy(path))
             if not status then
                 if Str.errorResume(err) == "Script was stopped" then
                     error("Script was stopped")
                 end
 
-                local _pos = path[1]["pos"]
-                if error_pos ~= nil and Calc.distance3d(error_pos, pos) < 2 then
+                path = nil -- force to recalculate the path
+
+                local pos = getPlayer().pos
+                pos = {math.floor(pos[1]), math.floor(pos[2]), math.floor(pos[3])}
+                if error_pos ~= nil and Calc.distance3d(error_pos, pos) < 3 then
                     errors_count = errors_count + 1
                 else
                     error_pos = pos
@@ -531,13 +557,19 @@ walk.walkTo = function(to, steps, pathFinderConfig)
                 if errors_count >= 3 then
                     error(err)
                 elseif errors_count == 1 then
-                    pathFinderConfig.denylist_positions[Calc.pointToStr(_pos)] = true
+                    pathFinderConfig.denylist_positions[Calc.pointToStr(error_pos)] = true
                 end
             else
                 errors_count = 0
             end
-        end
+        end)
+
+        Command.addThread(threadPath)
+        threadPath:start()
+        sleep(100)
+        :: continue ::
     end
+
 end
 
 walk.walkAway = function (distance, angle)
