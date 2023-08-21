@@ -268,7 +268,12 @@ walk.neighbors = function(current, max_jump, max_fall, canPlace, canBreak)
 end
 
 walk.heuristic = function(point1, point2)
-    return Calc.distance3d(point1, point2)
+    local dx = math.abs(point2[1] - point1[1])
+    local dy = math.abs(point2[2] - point1[2])
+    local dz = math.abs(point2[3] - point1[3])
+    local min = math.min(dx, dy, dz)
+
+    return (dx + dy + dz) + (min * 0.5)
 end
 
 walk.pathFinder = function(from, objective, pathFinderConfig)
