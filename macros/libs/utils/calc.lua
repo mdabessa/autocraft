@@ -1,9 +1,9 @@
 local calc = {}
 
 calc.distance3d = function(point1, point2)
-    local x = point1[1] - point2[1]
-    local y = point1[2] - point2[2]
-    local z = point1[3] - point2[3]
+    local x = math.abs(point1[1] - point2[1])
+    local y = math.abs(point1[2] - point2[2])
+    local z = math.abs(point1[3] - point2[3])
     return math.sqrt(x * x + y * y + z * z)
 end
 
