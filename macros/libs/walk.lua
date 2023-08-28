@@ -493,6 +493,7 @@ walk.walkTo = function(to, steps, pathFinderConfig)
     local threadPath = nil
     local errors_count = 0
     local error_pos = nil
+    local error_message = nil
     while true do
         local endPos = Table.copy(to)
         local startPos = nil
@@ -529,15 +530,20 @@ walk.walkTo = function(to, steps, pathFinderConfig)
             end
         end
 
-        if #path == 0 then
-            return true
+        if error_message ~= nil then
+            error(Str.errorResume(error_message))
         end
 
         if path == nil then goto continue end
 
+        if #path == 0 then
+            return true
+        end
+
         threadPath = thread.new(function ()
             if #path == 0 then return end
-            local status, err = pcall(walk.followPath, Table.copy(path))
+            local _path = Table.copy(path)
+            local status, err = pcall(walk.followPath, _path)
             if not status then
                 if Str.errorResume(err) == "Script was stopped" then
                     error("Script was stopped")
@@ -550,15 +556,17 @@ walk.walkTo = function(to, steps, pathFinderConfig)
                 if error_pos ~= nil and Calc.distance3d(error_pos, pos) < 3 then
                     errors_count = errors_count + 1
                 else
-                    error_pos = pos
+                    error_pos = _path[1]['pos']
                     errors_count = 1
                 end
 
                 if errors_count >= 3 then
+                    error_message = err
                     error(err)
-                elseif errors_count == 1 then
+                elseif errors_count == 2 then
                     pathFinderConfig.denylist_positions[Calc.pointToStr(error_pos)] = true
                 end
+
             else
                 errors_count = 0
             end
