@@ -422,19 +422,31 @@ walk.move = function(node)
     end
 
     time = os.time()
+    local dist = Calc.distance3d(player.pos, {to[1]+0.5, to[2], to[3]+0.5})
     while true do
         local now = os.time()
+        player = getPlayer()
+
         if now - time > 3 then
-            error("Player stuck")
+            local _dist = Calc.distance3d(player.pos, {to[1]+0.5, to[2], to[3]+0.5})
+            if dist - _dist < 1 then
+                error("Player stuck")
+            end
+            time = now
+            dist = _dist
         end
 
-        player = getPlayer()
         local from = {player.pos[1], player.pos[2], player.pos[3]}
-        if Calc.distance3d(from, to) < 1 then return end
-
         local block = getBlock(from[1], from[2], from[3])
+        if block.id == 'minecraft:water' then
+            from[2] = from[2] - 0.5
+        end
+
+        dist = Calc.distance3d(from, {to[1]+0.5, to[2], to[3]+0.5})
+        if dist < 0.5 then return end
+
         if block ~= nil and block.id == 'minecraft:water' then
-            key("SPACE", 1)
+            key("SPACE", 10)
         end
 
         if to[2] - player.pos[2] > 0.5 then jump(1) end
@@ -454,14 +466,6 @@ walk.move = function(node)
 
         if (diff  < 90 and diff > -90) then
             forward(10)
-        -- else
-        --     back(10)
-        -- end
-
-        -- if (diff > 45 and diff < 135)then
-        --     right(10)
-        -- elseif (diff < -45 and diff > -135)then
-        --     left(10)
         end
     end
 end
