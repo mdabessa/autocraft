@@ -1,7 +1,7 @@
-local dictonary = {}
+local dictionary = {}
 
 
-dictonary.ids = {
+dictionary.ids = {
     ["minecraft:log"] = {
         "minecraft:oak_log",
         "minecraft:spruce_log",
@@ -38,8 +38,8 @@ dictonary.ids = {
     }
 }
 
-dictonary.getGroup = function(id)
-    for k, v in pairs(dictonary.ids) do
+dictionary.getGroup = function(id)
+    for k, v in pairs(dictionary.ids) do
         for _, v2 in pairs(v) do
             if v2 == id then
                 return k
@@ -49,8 +49,8 @@ dictonary.getGroup = function(id)
     return id
 end
 
-dictonary.getGroupItems = function(group)
-    return dictonary.ids[group] or {group}
+dictionary.getGroupItems = function(group)
+    return dictionary.ids[group] or {group}
 end
 
-return dictonary
+return dictionary
