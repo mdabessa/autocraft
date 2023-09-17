@@ -109,8 +109,10 @@ test.walkTest = function(max_tries)
     local last_dist_hud = Hud.addText('Last test distance: ', 2, 29)
     last_dist_hud.setTextSize(7)
 
-    Hud.enable()
+    local test_hud = Hud.addText('Test: 0/' .. tostring(max_tries), 2, 38)
+    test_hud.setTextSize(7)
 
+    Hud.enable()
     local th = thread.new(function ()
         while true do
             local pos = getPlayer().pos
@@ -122,6 +124,7 @@ test.walkTest = function(max_tries)
     th:start()
 
     for i=1, max_tries do
+        test_hud.setText('Test: ' .. tostring(i) .. '/' .. tostring(max_tries))
         local result = {}
         local start = os.time()
 
@@ -136,6 +139,10 @@ test.walkTest = function(max_tries)
             result['error'] = nil
             result['traceback'] = nil
         else
+            if Str.errorResume(err) == 'Script was stopped' then
+                error('Script was stopped')
+            end
+
             result['error'] = Str.errorResume(err)
             result['traceback'] = err
         end
