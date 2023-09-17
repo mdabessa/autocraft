@@ -13,6 +13,7 @@ home.getHome = function()
     return home.HOME
 end
 
+-- #TODO: Salvar a homePoint em um json
 home.setHome = function(x, y, z)
     home.HOME = {x, y, z}
 end
@@ -85,9 +86,11 @@ end
 
 home.homePlace = function (pos)
     local block = getBlock(pos[1], pos[2], pos[3])
+    local id = Dictionary.getGroup(block.id)
 
-    if block.id == 'minecraft:air' then return false end
-    if block.id == 'minecraft:water' then return false end
+    if id == 'minecraft:air' then return false end
+    if id == 'minecraft:water' then return false end
+    if id == 'minecraft:leaves' then return false end
 
     for i = -1, 1 do
         for j = -1, 1 do
