@@ -353,6 +353,11 @@ crafting.craft = function(item_id, quantity)
                             string.find(err, 'Item is denylist')) then
                             goto next_recipe
                         end
+
+                        if not status then
+                            error(err)
+                        end
+
                         hasAllItems = false
                     end
                     ::continue::
