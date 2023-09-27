@@ -225,7 +225,7 @@ crafting.setRecipe = function(recipe, map)
                 inv.click(map.craftingIn[s], inv.RMB)
                 sleep(200)
                 inv.click(slot)
-                sleep(1000)
+                sleep(200)
                 sucess = true
                 break
                 ::continue::
