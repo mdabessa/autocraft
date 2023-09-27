@@ -189,13 +189,29 @@ crafting.countRecipeItems = function(recipe)
     return items
 end
 
+crafting.recipeToStr = function (recipe)
+    local str = ''
+    for i = 1, #recipe['in'] do
+        for j = 1, #recipe['in'][i] do
+            local item = recipe['in'][j][i][1]
+            if item ~= nil and next(item) ~= nil then
+                str = str .. item.id .. '    '
+            else
+                str = str .. 'nil    '
+            end
+        end
+        str = str .. '\n'
+    end
+    return str
+end
+
 crafting.setRecipe = function(recipe, map)
     local inv = openInventory()
     for i=1, #recipe['in'] do
         for j=1, #recipe['in'][i] do
             local items = recipe['in'][i][j]
             local sucess = false
-            if #items == 0 then sucess = true end
+            if #items == 0 or next(items[1]) == nil then sucess = true end
             for _, possible_item in pairs(items) do
                 local id = Dictionary.getGroup(possible_item.id)
                 local slot = Inventory.findItem(id, map)
@@ -209,12 +225,13 @@ crafting.setRecipe = function(recipe, map)
                 inv.click(map.craftingIn[s], inv.RMB)
                 sleep(200)
                 inv.click(slot)
-                sleep(200)
+                sleep(1000)
                 sucess = true
                 break
                 ::continue::
             end
             if not sucess then
+                Logger.log('Failed to place item in slot ' .. i .. ' ' .. j)
                 inv.close()
                 return false
             end
