@@ -42,65 +42,76 @@ crafting.getRecipes = function (item_id)
     local notValid = {}
 
     for i=1, #_recipes['crafting'] do
-        local id = _recipes['crafting'][i]['out']['id']
-        if id ~= item_id then
-            table.insert(notValid, i)
-        end
-
-        -- normalize shape
-        -- collumns[ rows[ item_variation[ item ] ] ]
-        -- 3 x 3 x n or 2 x 2 x n
-        local shape = crafting.shape(_recipes['crafting'][i]['in'])
-        if #shape == 2 and shape[2] > 1 then
-            -- 1 x 1 with n variations
-            local new_recipe = {
-                {{}, {}},
-                {{}, {}}
-            }
-            new_recipe[1][1] = _recipes['crafting'][i]['in'][1]
-            _recipes['crafting'][i]['in'] = new_recipe
-
-        elseif #shape == 2 then
-            -- 2x2 with 1 variation
-            local new_recipe = {
-                {{}, {}},
-                {{}, {}}
-            }
-
-            for j=1, #_recipes['crafting'][i]['in'] do
-                for k=1, #_recipes['crafting'][i]['in'][j] do
-                    local item = _recipes['crafting'][i]['in'][j][k]
-                    new_recipe[j][k] = {item}
-                end
+        local status, err = pcall(function ()
+            local id = _recipes['crafting'][i]['out']['id']
+            if id ~= item_id then
+                table.insert(notValid, i)
             end
-            _recipes['crafting'][i]['in'] = new_recipe
-
-        elseif #shape == 3 then
-            -- 2x2 or 3x3 with n variations
-
-            local new_recipe = {}
-            if shape[1] < 3 and shape[2] < 3 then
-                new_recipe = {
+    
+            -- normalize shape
+            -- collumns[ rows[ item_variation[ item ] ] ]
+            -- 3 x 3 x n or 2 x 2 x n
+            local shape = crafting.shape(_recipes['crafting'][i]['in'])
+            if #shape == 2 and shape[2] > 1 then
+                -- 1 x 1 with n variations
+                local new_recipe = {
                     {{}, {}},
                     {{}, {}}
                 }
-            else
-                new_recipe = {
-                    {{}, {}, {}},
-                    {{}, {}, {}},
-                    {{}, {}, {}}
+                new_recipe[1][1] = _recipes['crafting'][i]['in'][1]
+                _recipes['crafting'][i]['in'] = new_recipe
+    
+            elseif #shape == 2 then
+                -- 2x2 with 1 variation
+                local new_recipe = {
+                    {{}, {}},
+                    {{}, {}}
                 }
+    
+                for j=1, #_recipes['crafting'][i]['in'] do
+                    for k=1, #_recipes['crafting'][i]['in'][j] do
+                        local item = _recipes['crafting'][i]['in'][j][k]
+                        new_recipe[j][k] = {item}
+                    end
+                end
+                _recipes['crafting'][i]['in'] = new_recipe
+    
+            elseif #shape == 3 then
+                -- 2x2 or 3x3 with n variations
+    
+                local new_recipe = {}
+                if shape[1] < 3 and shape[2] < 3 then
+                    new_recipe = {
+                        {{}, {}},
+                        {{}, {}}
+                    }
+                else
+                    new_recipe = {
+                        {{}, {}, {}},
+                        {{}, {}, {}},
+                        {{}, {}, {}}
+                    }
+                end
+    
+                for j=1, #_recipes['crafting'][i]['in'] do
+                    for k=1, #_recipes['crafting'][i]['in'][j] do
+                        local items = _recipes['crafting'][i]['in'][j][k]
+                        if items[1] == nil then items = {items} end
+                        new_recipe[j][k] = items
+                    end
+                end
+                _recipes['crafting'][i]['in'] = new_recipe
+            else
+                table.insert(notValid, i)
+            end
+        end
+        )
+
+        if not status then
+            if Str.errorResume(err) == "Script was stopped" then
+                error("Script was stopped")
             end
 
-            for j=1, #_recipes['crafting'][i]['in'] do
-                for k=1, #_recipes['crafting'][i]['in'][j] do
-                    local items = _recipes['crafting'][i]['in'][j][k]
-                    if items[1] == nil then items = {items} end
-                    new_recipe[j][k] = items
-                end
-            end
-            _recipes['crafting'][i]['in'] = new_recipe
-        else
             table.insert(notValid, i)
         end
 
