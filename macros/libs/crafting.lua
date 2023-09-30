@@ -139,17 +139,34 @@ crafting.getValidRecipes = function (recipe_id)
         if #recipes['crafting'] == 0 then goto continue end
         for _, recipe in pairs(recipes['crafting']) do
             local valid = true
-            for _, row in pairs(recipe['in']) do
-                for _, items in pairs(row) do
-                    if #items > 0 then
-                        local item = items[1]
-                        local _recipe = crafting.getRecipes(item.id)
-                        if _recipe ~= nil and #_recipe['crafting'] > 0 then
-                            local count = crafting.countRecipeItems(_recipe['crafting'][1])
-                            if count[recipe_id] ~= nil then
-                                -- recursive recipe, skip
-                                valid = false
+            for i=1, #recipe['in'] do
+                for j=1, #recipe['in'][i] do
+                    if #recipe['in'][i][j] > 0 then
+                        local valid_itens = {}
+                        for _, item in pairs(recipe['in'][i][j]) do
+                            local _recipe = crafting.getRecipes(item.id)
+                            if _recipe ~= nil and #_recipe['crafting'] > 0 then
+                                local count = crafting.countRecipeItems(_recipe['crafting'][1])
+                                if count[recipe_id] == nil and crafting.isDenylisted(item.id) == false then
+                                    table.insert(valid_itens, item)
+                                end
+                            else
+                                if crafting.isDenylisted(item.id) == false then
+                                    table.insert(valid_itens, item)
+                                end
                             end
+                        end
+
+                        if #valid_itens == 0 then
+                            valid = false
+                            break
+                        end
+
+                        recipe['in'][i][j] = valid_itens
+                    elseif next(recipe['in'][i][j]) ~= nil then
+                        if crafting.isDenylisted(recipe['in'][i][j].id) then
+                            valid = false
+                            break
                         end
                     end
                 end
@@ -361,7 +378,7 @@ crafting.craft = function(item_id, quantity)
     local recipes = crafting.getValidRecipes(item_id)
     if recipes['crafting'] ~= nil and #recipes['crafting'] > 0 then
         for i, recipe in pairs(recipes['crafting']) do
-            Logger.log('crafting: ' .. item_id .. ' with recipe ' .. i)
+            Logger.log('Try crafting ' .. item_id .. ' with recipe ' .. tostring(recipe['out']['id']) .. ' [' .. tostring(i) .. '/' .. tostring(#recipes['crafting']) .. ']')
             local items = crafting.countRecipeItems(recipe)
             while true do
                 local hasAllItems = true
