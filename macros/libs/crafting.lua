@@ -123,7 +123,7 @@ crafting.getRecipes = function (item_id)
     return _recipes
 end
 
-crafting.getValidRecipes = function (recipe_id)
+crafting.getValidRecipes = function (recipe_id
     local ids = Dictionary.getGroupItems(recipe_id)
     local all_recipes = {['crafting'] = {}}
     for _, id in pairs(ids) do
