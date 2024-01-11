@@ -456,7 +456,7 @@ walk.move = function(node)
 
         local step = (yaw - old_yaw)
         local next = old_yaw + step
-
+        
         if not Calc.compareArray({from[1], from[3]}, {to[1], to[3]}) and
             math.abs(step) > 0.1 then
             look(next, 0)
@@ -588,7 +588,7 @@ walk.walkAway = function (distance, angle)
     distance = distance or 50
     local player = getPlayer()
 
-    angle = angle or math.random(0, 360)
+    angle = angle or  0 -- math.random(0, 360)
     local pos = {math.floor(player.pos[1]), math.floor(player.pos[2]), math.floor(player.pos[3])}
     local new_point = Calc.directionToPoint(pos, angle, distance)
     local box = Calc.createBox(new_point, 10)
